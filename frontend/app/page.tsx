@@ -5,10 +5,20 @@ import { ConfigPanel } from '@/components/config/ConfigPanel';
 import { useStore } from '@/store/systemStore';
 import { persistence } from '@/lib/persistence';
 import { useState, useEffect } from 'react';
-import { Save, Trash2, FolderOpen, PencilLine } from 'lucide-react';
+import { Save, Trash2, FolderOpen, PencilLine, Play, Square, Activity } from 'lucide-react';
+import MetricsPanel from '@/components/Simulation/MetricsPanel';
 
 export default function Home() {
-  const { systemName, setSystemName, saveDesign, clearCanvas, loadDesign } = useStore();
+  const {
+    systemName,
+    setSystemName,
+    saveDesign,
+    clearCanvas,
+    loadDesign,
+    isSimulating,
+    startSimulation,
+    stopSimulation
+  } = useStore();
   const [isEditingName, setIsEditingName] = useState(false);
   const [savedDesigns, setSavedDesigns] = useState<any[]>([]);
   const [showLoadMenu, setShowLoadMenu] = useState(false);
@@ -110,6 +120,26 @@ export default function Home() {
 
           <div className="h-6 w-[1px] bg-slate-200 mx-1" />
 
+          {isSimulating ? (
+            <button
+              onClick={stopSimulation}
+              className="px-4 py-1.5 text-sm font-medium bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-all flex items-center gap-2 active:scale-95 border border-red-200"
+            >
+              <Square size={16} fill="currentColor" />
+              Stop Simulation
+            </button>
+          ) : (
+            <button
+              onClick={startSimulation}
+              className="px-4 py-1.5 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-md flex items-center gap-2 active:scale-95"
+            >
+              <Play size={16} fill="currentColor" />
+              Run Simulation
+            </button>
+          )}
+
+          <div className="h-6 w-[1px] bg-slate-200 mx-1" />
+
           <button
             onClick={handleSave}
             className="px-4 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md flex items-center gap-2 active:scale-95"
@@ -125,6 +155,7 @@ export default function Home() {
         <LibraryPanel />
         <Canvas />
         <ConfigPanel />
+        <MetricsPanel />
       </div>
     </main>
   );

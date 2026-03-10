@@ -24,6 +24,15 @@ interface SystemState {
     systemId: string;
     systemName: string;
 
+    // Simulation State
+    isSimulating: boolean;
+    simEvents: any[];
+    simStats: {
+        totalRequests: number;
+        completedRequests: number;
+        avgLatency: number;
+    };
+
     // Actions
     onNodesChange: OnNodesChange;
     onEdgesChange: OnEdgesChange;
@@ -33,6 +42,11 @@ interface SystemState {
     selectNode: (id: string | null) => void;
     updateNodeConfig: (id: string, config: any) => void;
     deleteNode: (id: string) => void;
+
+    // Simulation Actions
+    startSimulation: () => void;
+    stopSimulation: () => void;
+    handleSimEvent: (event: any) => void;
 
     // System Actions
     saveDesign: () => void;
@@ -47,6 +61,13 @@ export const useStore = create<SystemState>((set, get) => ({
     selectedNodeId: null,
     systemId: uuidv4(),
     systemName: 'Untitled Architecture',
+    isSimulating: false,
+    simEvents: [],
+    simStats: {
+        totalRequests: 0,
+        completedRequests: 0,
+        avgLatency: 0,
+    },
 
     onNodesChange: (changes: NodeChange[]) => {
         set({
@@ -70,7 +91,7 @@ export const useStore = create<SystemState>((set, get) => ({
         }
 
         set({
-            edges: addEdge({ ...connection, animated: true, style: { strokeWidth: 2 } }, edges),
+            edges: addEdge({ ...connection, type: 'packet', animated: true }, edges),
         });
     },
 
@@ -156,5 +177,49 @@ export const useStore = create<SystemState>((set, get) => ({
 
     setSystemName: (name: string) => {
         set({ systemName: name });
+    },
+
+    startSimulation: async () => {
+        const { nodes, edges } = get();
+        const graphData = {
+            nodes: nodes.map(n => ({ id: n.id, type: n.data.type, data: n.data.config })),
+            edges: edges.map(e => ({ source: e.source, target: e.target }))
+        };
+
+        const { SimulationService } = await import('@/lib/simulationService');
+        const service = new SimulationService((ev: any) => {
+            get().handleSimEvent(ev);
+        });
+
+        set({ isSimulating: true, simEvents: [], simStats: { totalRequests: 0, completedRequests: 0, avgLatency: 0 } });
+        service.startSimulation(graphData);
+        (window as any).simService = service;
+    },
+
+    stopSimulation: () => {
+        const service = (window as any).simService;
+        if (service) {
+            service.stopSimulation();
+            service.disconnect();
+            (window as any).simService = null;
+        }
+        set({ isSimulating: false });
+        toast.info('Simulation stopped');
+    },
+
+    handleSimEvent: (event: any) => {
+        const { simStats, simEvents } = get();
+
+        const newStats = { ...simStats };
+        if (event.event_type === 'REQUEST_STARTED') {
+            newStats.totalRequests += 1;
+        } else if (event.event_type === 'REQUEST_COMPLETED') {
+            newStats.completedRequests += 1;
+        }
+
+        set({
+            simStats: newStats,
+            simEvents: [...simEvents.slice(-50), event]
+        });
     }
 }));

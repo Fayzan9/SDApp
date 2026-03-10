@@ -10,9 +10,15 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useStore } from '@/store/systemStore';
 import { CustomNode } from './CustomNode';
+import PacketEdge from '@/components/Simulation/PacketEdge';
 
 const nodeTypes = {
     custom: CustomNode,
+};
+
+const edgeTypes = {
+    default: PacketEdge,
+    packet: PacketEdge,
 };
 
 export const Canvas = () => {
@@ -74,6 +80,7 @@ export const Canvas = () => {
                 onNodeClick={onNodeClick}
                 onPaneClick={onPaneClick}
                 nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
                 fitView
             >
                 <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#e2e8f0" />

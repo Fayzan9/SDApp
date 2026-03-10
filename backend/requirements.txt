@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+simpy
+pydantic
+websockets
+pytest
+python-multipart
