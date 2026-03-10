@@ -10,6 +10,7 @@ import {
     OnEdgesChange,
     applyNodeChanges,
     applyEdgeChanges,
+    reconnectEdge,
 } from '@xyflow/react';
 import { COMPONENT_REGISTRY } from '@/lib/componentRegistry';
 import { validateConnection } from '@/lib/topologyValidator';
@@ -53,6 +54,16 @@ interface SystemState {
     loadDesign: (id: string) => void;
     clearCanvas: () => void;
     setSystemName: (name: string) => void;
+    copyNode: (id: string) => void;
+    pasteNode: (position: { x: number; y: number }) => void;
+    onReconnect: (oldEdge: Edge, newConnection: Connection) => void;
+    deleteEdge: (id: string) => void;
+}
+
+interface ClipboardData {
+    type: string;
+    config: any;
+    label: string;
 }
 
 export const useStore = create<SystemState>((set, get) => ({
@@ -76,8 +87,20 @@ export const useStore = create<SystemState>((set, get) => ({
     },
 
     onEdgesChange: (changes: EdgeChange[]) => {
+        let newEdges = applyEdgeChanges(changes, get().edges);
+
+        // Bring selected edge to front for better hit testing/reconnection
+        const selectChange = changes.find(c => c.type === 'select' && c.selected);
+        if (selectChange && 'id' in selectChange) {
+            const edgeIndex = newEdges.findIndex(e => e.id === selectChange.id);
+            if (edgeIndex > -1) {
+                const edge = newEdges[edgeIndex];
+                newEdges = [...newEdges.slice(0, edgeIndex), ...newEdges.slice(edgeIndex + 1), edge];
+            }
+        }
+
         set({
-            edges: applyEdgeChanges(changes, get().edges),
+            edges: newEdges,
         });
     },
 
@@ -221,5 +244,62 @@ export const useStore = create<SystemState>((set, get) => ({
             simStats: newStats,
             simEvents: [...simEvents.slice(-50), event]
         });
+    },
+
+    copyNode: (id: string) => {
+        const node = get().nodes.find(n => n.id === id);
+        if (!node) return;
+
+        const clipboard: ClipboardData = {
+            type: node.data.type as string,
+            config: JSON.parse(JSON.stringify(node.data.config)),
+            label: node.data.label as string,
+        };
+
+        (window as any)._sd_clipboard = clipboard;
+        toast.info('Copied component');
+    },
+
+    pasteNode: (position: { x: number; y: number }) => {
+        const clipboard = (window as any)._sd_clipboard as ClipboardData;
+        if (!clipboard) return;
+
+        const newNode: Node = {
+            id: `${clipboard.type}-${uuidv4().slice(0, 8)}`,
+            type: 'custom',
+            position,
+            data: {
+                label: clipboard.label,
+                type: clipboard.type,
+                config: JSON.parse(JSON.stringify(clipboard.config))
+            },
+        };
+
+        set({
+            nodes: [...get().nodes, newNode],
+        });
+        toast.success('Pasted component');
+    },
+
+    onReconnect: (oldEdge: Edge, newConnection: Connection) => {
+        const { nodes, edges } = get();
+        const validation = validateConnection(newConnection, nodes, edges);
+
+        if (!validation.isValid) {
+            toast.error(validation.message || 'Invalid reconnection');
+            return;
+        }
+
+        set({
+            edges: reconnectEdge(oldEdge, newConnection, edges),
+        });
+        toast.success('Edge reconnected');
+    },
+
+    deleteEdge: (id: string) => {
+        set({
+            edges: get().edges.filter((edge) => edge.id !== id),
+        });
+        toast.success('Edge deleted');
     }
 }));

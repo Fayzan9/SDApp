@@ -12,6 +12,7 @@ export default function PacketEdge({
     targetPosition,
     style = {},
     markerEnd,
+    selected,
 }: EdgeProps) {
     const [edgePath, labelX, labelY] = getBezierPath({
         sourceX,
@@ -37,7 +38,16 @@ export default function PacketEdge({
 
     return (
         <>
-            <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} />
+            <BaseEdge
+                path={edgePath}
+                markerEnd={markerEnd}
+                style={{
+                    ...style,
+                    stroke: selected ? '#3b82f6' : '#94a3b8',
+                    strokeWidth: selected ? 3 : 2,
+                    transition: 'all 0.2s',
+                }}
+            />
             {isSimulating && (
                 <EdgeLabelRenderer>
                     {activePackets.map((pkt, i) => (

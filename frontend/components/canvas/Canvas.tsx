@@ -5,12 +5,16 @@ import {
     Background,
     Controls,
     BackgroundVariant,
-    Panel
+    Panel,
+    useReactFlow,
+    ReactFlowProvider
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useStore } from '@/store/systemStore';
 import { CustomNode } from './CustomNode';
 import PacketEdge from '@/components/Simulation/PacketEdge';
+import ContextMenu from './ContextMenu';
+import { useState, useRef } from 'react';
 
 const nodeTypes = {
     custom: CustomNode,
@@ -21,7 +25,7 @@ const edgeTypes = {
     packet: PacketEdge,
 };
 
-export const Canvas = () => {
+const CanvasInner = () => {
     const {
         nodes,
         edges,
@@ -29,8 +33,15 @@ export const Canvas = () => {
         onEdgesChange,
         onConnect,
         addNode,
-        selectNode
+        selectNode,
+        copyNode,
+        pasteNode,
+        onReconnect
     } = useStore();
+
+    const { screenToFlowPosition } = useReactFlow();
+    const [menu, setMenu] = useState<{ id: string; type: 'node' | 'edge'; top?: number; left?: number; right?: number; bottom?: number } | null>(null);
+    const ref = useRef<HTMLDivElement>(null);
 
     const onDragOver = useCallback((event: React.DragEvent) => {
         event.preventDefault();
@@ -48,27 +59,89 @@ export const Canvas = () => {
                 return;
             }
 
-            // get position
-            const position = {
-                x: event.clientX - 264, // Subtract library width
-                y: event.clientY - 56,  // Subtract header height
-            };
+            const position = screenToFlowPosition({
+                x: event.clientX,
+                y: event.clientY,
+            });
 
             addNode(type, position);
         },
-        [addNode]
+        [addNode, screenToFlowPosition]
     );
+
+    const mousePos = useRef({ x: 0, y: 0 });
+    const onMouseMove = useCallback((event: React.MouseEvent) => {
+        mousePos.current = { x: event.clientX, y: event.clientY };
+    }, []);
+
+    const handlePaste = useCallback((event: KeyboardEvent) => {
+        const isCtrl = event.ctrlKey || event.metaKey;
+        if (isCtrl && event.key === 'v') {
+            const position = screenToFlowPosition(mousePos.current);
+            pasteNode(position);
+        }
+        if (isCtrl && event.key === 'c') {
+            const selectedNode = nodes.find(n => n.selected);
+            if (selectedNode) {
+                copyNode(selectedNode.id);
+            }
+        }
+    }, [screenToFlowPosition, pasteNode, nodes, copyNode]);
+
+    React.useEffect(() => {
+        window.addEventListener('keydown', handlePaste);
+        return () => window.removeEventListener('keydown', handlePaste);
+    }, [handlePaste]);
 
     const onNodeClick = useCallback((_: any, node: any) => {
         selectNode(node.id);
     }, [selectNode]);
 
+    const onNodeContextMenu = useCallback(
+        (event: React.MouseEvent, node: any) => {
+            event.preventDefault();
+
+            if (!ref.current) return;
+            const pane = ref.current.getBoundingClientRect();
+
+            setMenu({
+                id: node.id,
+                type: 'node',
+                top: event.clientY < pane.y + pane.height - 200 ? event.clientY - pane.y : undefined,
+                left: event.clientX < pane.x + pane.width - 200 ? event.clientX - pane.x : undefined,
+                right: event.clientX >= pane.x + pane.width - 200 ? pane.x + pane.width - event.clientX : undefined,
+                bottom: event.clientY >= pane.y + pane.height - 200 ? pane.y + pane.height - event.clientY : undefined,
+            });
+        },
+        [setMenu]
+    );
+
+    const onEdgeContextMenu = useCallback(
+        (event: React.MouseEvent, edge: any) => {
+            event.preventDefault();
+
+            if (!ref.current) return;
+            const pane = ref.current.getBoundingClientRect();
+
+            setMenu({
+                id: edge.id,
+                type: 'edge',
+                top: event.clientY < pane.y + pane.height - 200 ? event.clientY - pane.y : undefined,
+                left: event.clientX < pane.x + pane.width - 200 ? event.clientX - pane.x : undefined,
+                right: event.clientX >= pane.x + pane.width - 200 ? pane.x + pane.width - event.clientX : undefined,
+                bottom: event.clientY >= pane.y + pane.height - 200 ? pane.y + pane.height - event.clientY : undefined,
+            });
+        },
+        [setMenu]
+    );
+
     const onPaneClick = useCallback(() => {
         selectNode(null);
+        setMenu(null);
     }, [selectNode]);
 
     return (
-        <div className="flex-1 relative h-full bg-slate-50">
+        <div ref={ref} className="flex-1 relative h-full bg-slate-50" onMouseMove={onMouseMove}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -79,8 +152,12 @@ export const Canvas = () => {
                 onDragOver={onDragOver}
                 onNodeClick={onNodeClick}
                 onPaneClick={onPaneClick}
+                onNodeContextMenu={onNodeContextMenu}
+                onEdgeContextMenu={onEdgeContextMenu}
+                onReconnect={onReconnect}
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
+                edgesReconnectable={true}
                 fitView
             >
                 <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#e2e8f0" />
@@ -91,7 +168,14 @@ export const Canvas = () => {
                         Canvas
                     </div>
                 </Panel>
+                {menu && <ContextMenu onClick={() => setMenu(null)} {...menu} />}
             </ReactFlow>
         </div>
     );
 };
+
+export const Canvas = () => (
+    <ReactFlowProvider>
+        <CanvasInner />
+    </ReactFlowProvider>
+);

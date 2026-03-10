@@ -8,7 +8,7 @@ export default function MetricsPanel() {
     if (!isSimulating) return null;
 
     return (
-        <div className="fixed top-20 right-6 w-64 bg-white/90 backdrop-blur-md border border-slate-200 rounded-xl shadow-2xl p-4 z-50">
+        <div className="fixed bottom-6 right-85 w-64 bg-white/90 backdrop-blur-md border border-slate-200 rounded-xl shadow-2xl p-4 z-50">
             <h3 className="text-sm font-semibold text-slate-800 mb-4 border-b border-slate-100 pb-2">Live Metrics</h3>
 
             <div className="space-y-4">

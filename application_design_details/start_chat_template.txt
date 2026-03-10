@@ -1,0 +1,17 @@
+#### Bug Fixes 
+Hi, I want to fix the below UI Issues step by step, first understand the
+frontend structure and make changes accordingly
+
+1. When we drag the components from the component section to the canvas, the 
+component is getting added to the canvas but it is not dropping where my cursor is pointing
+it is dropping randomly at some place in the canvas, it should drop where my cursor is
+
+2. I want to change the position of live metrics in the canvas, it should be at the bottom right of the canvas
+
+3. I should be able to select the component and copy it using 'Cntrl + C' and paste it using 'Cntrl + V',
+also I should be able to right click on the component it should open a menu which contains a copy button for now in menu
+when I paste the component the new component should have same properties as the original component is was copied from
+and on 'Cntrl V' it should paste the component at the cursor position
+
+- Write Clean Modular Production Ready Code
+- Dont write unnecessary code 
