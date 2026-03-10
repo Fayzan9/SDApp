@@ -1,0 +1,34 @@
+# Task: Phase 2 - Simulation Engine Implementation
+
+## 1. Backend Foundation [x]
+- [x] Initialize Python FastAPI project in `/backend`
+- [x] Set up `requirements.txt` with SimPy, FastAPI, Uvicorn, etc.
+- [x] Create basic WebSocket manager for event streaming
+
+## 2. Simulation Logic (SimPy Models) [x]
+- [x] Implement `BaseComponent` and `SimulationEngine` wrapper
+- [x] Implement `Client` model (Request generator)
+- [x] Implement `Server` model (Resource with queue and latency)
+- [x] Implement `LoadBalancer` model (Routing logic)
+- [x] Implement `GraphParser` to convert frontend JSON to SimPy components
+
+## 3. Frontend Integration [x]
+- [x] Update Zustand store to manage simulation state
+- [x] Implement WebSocket client in frontend (`simulationService.ts`)
+- [x] Add Simulation Controls to the Header
+- [x] Implement Packet Animation on edges (`PacketEdge.tsx`)
+
+## 4. Metrics & Dashboards [x]
+- [x] Implement real-time metrics calculation
+- [x] Build a Metrics Panel for live stats (`MetricsPanel.tsx`)
+
+## 5. Bug Fixes & Refinement [x]
+- [x] Fix Load Balancer target initialization in `GraphParser`
+- [x] Fix Simulation Loop granularity to support >10 RPS
+- [x] Add support for `API Gateway` in parser
+- [x] Verify fix for RPS scaling (Real-time catch-up logic)
+
+## 6. Verification & Testing [x]
+- [x] Unit tests for SimPy components
+- [x] Manual verification with sample topologies
+- [x] Create walkthrough documentation
