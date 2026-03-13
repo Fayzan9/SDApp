@@ -1,5 +1,5 @@
 from typing import List, Dict, Any
-from .models import Client, Server, LoadBalancer
+from .components import Client, Server, LoadBalancer, Database, Cache, Gateway, MessageQueue, CDN, Firewall, LambdaFunction, ObjectStorage, PubSub
 from .core import SimulationEngine
 
 class GraphParser:
@@ -7,11 +7,6 @@ class GraphParser:
     def parse(graph_data: Dict[str, Any], engine: SimulationEngine):
         """
         Parses a frontend graph (nodes and edges) and populates the simulation engine.
-        Expected format (simplified):
-        {
-            "nodes": [{"id": "n1", "type": "client", "data": {"rps": 5}}, ...],
-            "edges": [{"source": "n1", "target": "n2"}, ...]
-        }
         """
         nodes = graph_data.get("nodes", [])
         edges = graph_data.get("edges", [])
@@ -33,12 +28,10 @@ class GraphParser:
             targets = out_edges.get(node_id, [])
             
             if node_type in ["web_client", "mobile_client"]:
-                # Map requests_per_sec from frontend
                 config["rps"] = config.get("requests_per_sec", 1.0)
                 comp = Client(engine, node_id, config, targets)
                 engine.register_component(node_id, comp)
             elif node_type == "server":
-                # Convert latency from ms to seconds
                 config["latency"] = config.get("latency", 50) / 1000.0
                 comp = Server(engine, node_id, config)
                 engine.register_component(node_id, comp)
@@ -46,11 +39,41 @@ class GraphParser:
                 comp = LoadBalancer(engine, node_id, config, targets)
                 engine.register_component(node_id, comp)
             elif node_type == "api_gateway":
-                # API Gateway behaves similarly to a Load Balancer/Router
-                comp = LoadBalancer(engine, node_id, config, targets)
+                config["latency"] = config.get("latency", 20) / 1000.0
+                comp = Gateway(engine, node_id, config, targets)
+                engine.register_component(node_id, comp)
+            elif node_type == "database":
+                config["latency"] = config.get("latency", 100) / 1000.0
+                comp = Database(engine, node_id, config)
+                engine.register_component(node_id, comp)
+            elif node_type == "cache":
+                config["latency"] = config.get("latency", 5) / 1000.0
+                comp = Cache(engine, node_id, config, targets)
+                engine.register_component(node_id, comp)
+            elif node_type == "message_queue":
+                comp = MessageQueue(engine, node_id, config, targets)
+                engine.register_component(node_id, comp)
+            elif node_type == "cdn":
+                config["latency"] = config.get("latency", 10) / 1000.0
+                comp = CDN(engine, node_id, config, targets)
+                engine.register_component(node_id, comp)
+            elif node_type == "firewall":
+                comp = Firewall(engine, node_id, config, targets)
+                engine.register_component(node_id, comp)
+            elif node_type == "lambda_function":
+                config["cold_start"] = config.get("cold_start_latency", 200) / 1000.0
+                config["exec_time"] = config.get("execution_time", 20) / 1000.0
+                comp = LambdaFunction(engine, node_id, config, targets)
+                engine.register_component(node_id, comp)
+            elif node_type == "blob_storage":
+                config["latency"] = config.get("latency", 100) / 1000.0
+                comp = ObjectStorage(engine, node_id, config)
+                engine.register_component(node_id, comp)
+            elif node_type == "pub_sub":
+                config["latency"] = config.get("latency", 5) / 1000.0
+                comp = PubSub(engine, node_id, config, targets)
                 engine.register_component(node_id, comp)
             else:
                 print(f"Warning: Node type '{node_type}' is not yet supported in simulation.")
-            # Add more types (LoadBalancer, Cache, etc.) here
             
         return engine
