@@ -2,12 +2,29 @@ from typing import Any, Dict, List
 from .base import BaseComponent
 
 class LambdaFunction(BaseComponent):
+    registry_type = "lambda_function"
+
     def __init__(self, engine, component_id: str, config: Dict[str, Any], targets: List[str]):
         super().__init__(engine, component_id, config)
-        self.cold_start = config.get("cold_start_latency", 0.5)
-        self.exec_time = config.get("execution_time", 0.1)
-        self.is_warm = False
+        self.cold_start = config.get("cold_start_latency", 200) / 1000.0
+        self.exec_time = config.get("execution_time", 50) / 1000.0
         self.targets = targets
+        self.is_warm = False
+
+    @classmethod
+    def get_metadata(cls):
+        return {
+            "type": cls.registry_type,
+            "label": "Serverless Func",
+            "category": "Compute",
+            "icon": "Zap",
+            "description": "Event-driven serverless computing.",
+            "config_schema": [
+                {"name": "cold_start_latency", "label": "Cold Start", "type": "number", "default": 200, "unit": "ms"},
+                {"name": "execution_time", "label": "Exec Time", "type": "number", "default": 50, "unit": "ms"},
+            ],
+            "ports": {"inputs": 1, "outputs": 1}
+        }
 
     def handle_request(self, request_id: str, source_id: str):
         self.engine.emit_event("REQUEST_MOVED", source_id, self.id, data={"request_id": request_id})

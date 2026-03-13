@@ -1,15 +1,14 @@
 "use client";
 import React from 'react';
 import { useStore } from '@/store/systemStore';
-import { COMPONENT_REGISTRY } from '@/lib/componentRegistry';
 import { Settings2, Trash2, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const ConfigPanel = () => {
-    const { nodes, selectedNodeId, updateNodeConfig, deleteNode } = useStore();
+    const { nodes, selectedNodeId, updateNodeConfig, deleteNode, componentRegistry } = useStore();
 
     const selectedNode = nodes.find((n) => n.id === selectedNodeId);
-    const componentDef = selectedNode ? COMPONENT_REGISTRY[selectedNode.data.type as string] : null;
+    const componentDef = selectedNode ? componentRegistry[selectedNode.data.type as string] : null;
 
     if (!selectedNode || !componentDef) {
         return (
@@ -61,7 +60,7 @@ export const ConfigPanel = () => {
                 </div>
 
                 <div className="space-y-4 pt-2">
-                    {componentDef.configSchema.map((field) => (
+                    {componentDef.config_schema.map((field: any) => (
                         <div key={field.name} className="space-y-1.5">
                             <div className="flex justify-between items-center">
                                 <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
@@ -98,7 +97,7 @@ export const ConfigPanel = () => {
                                     onChange={(e) => handleConfigChange(field.name, e.target.value)}
                                     className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all shadow-sm appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px_20px] bg-no-repeat bg-[right_8px_center]"
                                 >
-                                    {field.options?.map((opt) => (
+                                    {field.options?.map((opt: string) => (
                                         <option key={opt} value={opt}>
                                             {opt.replace('_', ' ')}
                                         </option>

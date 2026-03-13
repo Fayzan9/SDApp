@@ -17,7 +17,8 @@ export default function Home() {
     loadDesign,
     isSimulating,
     startSimulation,
-    stopSimulation
+    stopSimulation,
+    fetchComponents
   } = useStore();
   const [isEditingName, setIsEditingName] = useState(false);
   const [savedDesigns, setSavedDesigns] = useState<any[]>([]);
@@ -25,6 +26,7 @@ export default function Home() {
 
   useEffect(() => {
     setSavedDesigns(persistence.getAll());
+    fetchComponents();
   }, []);
 
   const handleSave = () => {

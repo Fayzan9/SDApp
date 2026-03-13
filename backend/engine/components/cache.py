@@ -3,11 +3,28 @@ from typing import Any, Dict, List
 from .base import BaseComponent
 
 class Cache(BaseComponent):
+    registry_type = "cache"
+
     def __init__(self, engine, component_id: str, config: Dict[str, Any], targets: List[str]):
         super().__init__(engine, component_id, config)
-        self.hit_rate = config.get("hit_rate", 0.8)
-        self.latency = config.get("latency", 0.01)
+        self.hit_rate = config.get("hit_rate", 80) / 100.0
+        self.latency = config.get("latency", 5) / 1000.0
         self.targets = targets
+
+    @classmethod
+    def get_metadata(cls):
+        return {
+            "type": cls.registry_type,
+            "label": "Cache",
+            "category": "Performance",
+            "icon": "Zap",
+            "description": "In-memory data store for fast access.",
+            "config_schema": [
+                {"name": "hit_rate", "label": "Hit Rate", "type": "number", "default": 80, "unit": "%"},
+                {"name": "ttl", "label": "Default TTL", "type": "number", "default": 3600, "unit": "s"},
+            ],
+            "ports": {"inputs": 1, "outputs": 1}
+        }
 
     def handle_request(self, request_id: str, source_id: str):
         self.engine.emit_event("REQUEST_MOVED", source_id, self.id, data={"request_id": request_id})

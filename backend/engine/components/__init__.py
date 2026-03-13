@@ -1,5 +1,5 @@
 from .base import BaseComponent
-from .client import Client
+from .client import Client, WebClient, MobileClient
 from .server import Server
 from .load_balancer import LoadBalancer
 from .database import Database
@@ -15,6 +15,8 @@ from .pubsub import PubSub
 __all__ = [
     "BaseComponent",
     "Client",
+    "WebClient",
+    "MobileClient",
     "Server",
     "LoadBalancer",
     "Database",

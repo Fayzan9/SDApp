@@ -3,11 +3,28 @@ from typing import Any, Dict, List
 from .base import BaseComponent
 
 class CDN(BaseComponent):
+    registry_type = "cdn"
+
     def __init__(self, engine, component_id: str, config: Dict[str, Any], targets: List[str]):
         super().__init__(engine, component_id, config)
-        self.hit_rate = config.get("hit_rate", 0.9)
-        self.latency = config.get("latency", 0.01)
+        self.hit_rate = config.get("hit_rate", 90) / 100.0
+        self.latency = config.get("latency", 10) / 1000.0
         self.targets = targets
+
+    @classmethod
+    def get_metadata(cls):
+        return {
+            "type": cls.registry_type,
+            "label": "CDN",
+            "category": "Networking",
+            "icon": "Globe",
+            "description": "Content Delivery Network for static assets.",
+            "config_schema": [
+                {"name": "hit_rate", "label": "Hit Rate", "type": "number", "default": 90, "unit": "%"},
+                {"name": "latency", "label": "Edge Latency", "type": "number", "default": 10, "unit": "ms"},
+            ],
+            "ports": {"inputs": 1, "outputs": 1}
+        }
 
     def handle_request(self, request_id: str, source_id: str):
         self.engine.emit_event("REQUEST_MOVED", source_id, self.id, data={"request_id": request_id})

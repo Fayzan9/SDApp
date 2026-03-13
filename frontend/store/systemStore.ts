@@ -12,11 +12,12 @@ import {
     applyEdgeChanges,
     reconnectEdge,
 } from '@xyflow/react';
-import { COMPONENT_REGISTRY } from '@/lib/componentRegistry';
 import { validateConnection } from '@/lib/topologyValidator';
 import { persistence } from '@/lib/persistence';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
+import { componentApi, ComponentDefinition } from '@/lib/componentApi';
+import * as LucideIcons from 'lucide-react';
 
 interface SystemState {
     nodes: Node[];
@@ -24,6 +25,11 @@ interface SystemState {
     selectedNodeId: string | null;
     systemId: string;
     systemName: string;
+
+    // Component Registry State
+    componentRegistry: Record<string, ComponentDefinition>;
+    categories: string[];
+    isRegistryLoading: boolean;
 
     // Simulation State
     isSimulating: boolean;
@@ -58,6 +64,9 @@ interface SystemState {
     pasteNode: (position: { x: number; y: number }) => void;
     onReconnect: (oldEdge: Edge, newConnection: Connection) => void;
     deleteEdge: (id: string) => void;
+
+    // Registry Actions
+    fetchComponents: () => Promise<void>;
 }
 
 interface ClipboardData {
@@ -79,6 +88,9 @@ export const useStore = create<SystemState>((set, get) => ({
         completedRequests: 0,
         avgLatency: 0,
     },
+    componentRegistry: {},
+    categories: [],
+    isRegistryLoading: false,
 
     onNodesChange: (changes: NodeChange[]) => {
         set({
@@ -105,8 +117,8 @@ export const useStore = create<SystemState>((set, get) => ({
     },
 
     onConnect: (connection: Connection) => {
-        const { nodes, edges } = get();
-        const validation = validateConnection(connection, nodes, edges);
+        const { nodes, edges, componentRegistry } = get();
+        const validation = validateConnection(connection, nodes, edges, componentRegistry);
 
         if (!validation.isValid) {
             toast.error(validation.message || 'Invalid connection');
@@ -119,7 +131,8 @@ export const useStore = create<SystemState>((set, get) => ({
     },
 
     addNode: (type: string, position: { x: number; y: number }) => {
-        const componentDef = COMPONENT_REGISTRY[type];
+        const { componentRegistry } = get();
+        const componentDef = componentRegistry[type];
         if (!componentDef) return;
 
         const newNode: Node = {
@@ -129,7 +142,7 @@ export const useStore = create<SystemState>((set, get) => ({
             data: {
                 label: componentDef.label,
                 type: componentDef.type,
-                config: componentDef.configSchema.reduce((acc, field) => ({
+                config: componentDef.config_schema.reduce((acc, field) => ({
                     ...acc,
                     [field.name]: field.default
                 }), {})
@@ -282,8 +295,8 @@ export const useStore = create<SystemState>((set, get) => ({
     },
 
     onReconnect: (oldEdge: Edge, newConnection: Connection) => {
-        const { nodes, edges } = get();
-        const validation = validateConnection(newConnection, nodes, edges);
+        const { nodes, edges, componentRegistry } = get();
+        const validation = validateConnection(newConnection, nodes, edges, componentRegistry);
 
         if (!validation.isValid) {
             toast.error(validation.message || 'Invalid reconnection');
@@ -301,5 +314,29 @@ export const useStore = create<SystemState>((set, get) => ({
             edges: get().edges.filter((edge) => edge.id !== id),
         });
         toast.success('Edge deleted');
+    },
+
+    fetchComponents: async () => {
+        set({ isRegistryLoading: true });
+        try {
+            const components = await componentApi.getComponents();
+            const registry: Record<string, ComponentDefinition> = {};
+            const categoriesSet = new Set<string>();
+
+            components.forEach(comp => {
+                registry[comp.type] = comp;
+                categoriesSet.add(comp.category);
+            });
+
+            set({
+                componentRegistry: registry,
+                categories: Array.from(categoriesSet),
+                isRegistryLoading: false
+            });
+        } catch (error) {
+            console.error('Failed to fetch components:', error);
+            set({ isRegistryLoading: false });
+            toast.error('Failed to load components from backend');
+        }
     }
 }));

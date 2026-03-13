@@ -1,12 +1,14 @@
 "use client";
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { COMPONENT_REGISTRY } from '@/lib/componentRegistry';
+import { useStore } from '@/store/systemStore';
 import { cn } from '@/lib/utils';
+import * as LucideIcons from 'lucide-react';
 
 export const CustomNode = memo(({ data, selected }: NodeProps) => {
-    const componentDef = COMPONENT_REGISTRY[data.type as string];
-    const Icon = componentDef?.icon;
+    const { componentRegistry } = useStore();
+    const componentDef = componentRegistry[data.type as string];
+    const Icon = componentDef ? (LucideIcons as any)[componentDef.icon] || LucideIcons.Box : null;
 
     return (
         <div

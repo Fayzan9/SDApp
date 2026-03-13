@@ -3,11 +3,21 @@ import asyncio
 from enum import Enum
 from typing import List, Dict, Any, Optional, Union
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from engine.core import SimulationEngine
 from engine.parser import GraphParser
+from engine.registry import ComponentRegistry
 
 app = FastAPI(title="SDApp Simulation Engine")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class SimulationEvent(BaseModel):
     event_type: str
@@ -39,6 +49,10 @@ manager = ConnectionManager()
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+@app.get("/api/components")
+async def get_components():
+    return ComponentRegistry.get_all_metadata()
 
 @app.websocket("/ws/simulate")
 async def websocket_simulate(websocket: WebSocket):

@@ -1,6 +1,6 @@
 from typing import List, Dict, Any
-from .components import Client, Server, LoadBalancer, Database, Cache, Gateway, MessageQueue, CDN, Firewall, LambdaFunction, ObjectStorage, PubSub
 from .core import SimulationEngine
+from .registry import ComponentRegistry
 
 class GraphParser:
     @staticmethod
@@ -27,51 +27,19 @@ class GraphParser:
             config = node.get("data", {})
             targets = out_edges.get(node_id, [])
             
-            if node_type in ["web_client", "mobile_client"]:
-                config["rps"] = config.get("requests_per_sec", 1.0)
-                comp = Client(engine, node_id, config, targets)
-                engine.register_component(node_id, comp)
-            elif node_type == "server":
-                config["latency"] = config.get("latency", 50) / 1000.0
-                comp = Server(engine, node_id, config)
-                engine.register_component(node_id, comp)
-            elif node_type == "load_balancer":
-                comp = LoadBalancer(engine, node_id, config, targets)
-                engine.register_component(node_id, comp)
-            elif node_type == "api_gateway":
-                config["latency"] = config.get("latency", 20) / 1000.0
-                comp = Gateway(engine, node_id, config, targets)
-                engine.register_component(node_id, comp)
-            elif node_type == "database":
-                config["latency"] = config.get("latency", 100) / 1000.0
-                comp = Database(engine, node_id, config)
-                engine.register_component(node_id, comp)
-            elif node_type == "cache":
-                config["latency"] = config.get("latency", 5) / 1000.0
-                comp = Cache(engine, node_id, config, targets)
-                engine.register_component(node_id, comp)
-            elif node_type == "message_queue":
-                comp = MessageQueue(engine, node_id, config, targets)
-                engine.register_component(node_id, comp)
-            elif node_type == "cdn":
-                config["latency"] = config.get("latency", 10) / 1000.0
-                comp = CDN(engine, node_id, config, targets)
-                engine.register_component(node_id, comp)
-            elif node_type == "firewall":
-                comp = Firewall(engine, node_id, config, targets)
-                engine.register_component(node_id, comp)
-            elif node_type == "lambda_function":
-                config["cold_start"] = config.get("cold_start_latency", 200) / 1000.0
-                config["exec_time"] = config.get("execution_time", 20) / 1000.0
-                comp = LambdaFunction(engine, node_id, config, targets)
-                engine.register_component(node_id, comp)
-            elif node_type == "blob_storage":
-                config["latency"] = config.get("latency", 100) / 1000.0
-                comp = ObjectStorage(engine, node_id, config)
-                engine.register_component(node_id, comp)
-            elif node_type == "pub_sub":
-                config["latency"] = config.get("latency", 5) / 1000.0
-                comp = PubSub(engine, node_id, config, targets)
+            comp_class = ComponentRegistry.get_component_class(node_type)
+            if comp_class:
+                # Some legacy config mapping might be needed if they differ by type
+                # but with the new system, we expect the config to match what's in metadata
+                
+                # Check if component takes targets (clients, load balancers, etc.)
+                import inspect
+                sig = inspect.signature(comp_class.__init__)
+                if "targets" in sig.parameters:
+                    comp = comp_class(engine, node_id, config, targets)
+                else:
+                    comp = comp_class(engine, node_id, config)
+                
                 engine.register_component(node_id, comp)
             else:
                 print(f"Warning: Node type '{node_type}' is not yet supported in simulation.")

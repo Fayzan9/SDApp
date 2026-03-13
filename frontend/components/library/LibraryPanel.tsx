@@ -1,13 +1,25 @@
 "use client";
 import React from 'react';
-import { COMPONENT_REGISTRY, CATEGORIES } from '@/lib/componentRegistry';
+import { useStore } from '@/store/systemStore';
 import { cn } from '@/lib/utils';
+import * as LucideIcons from 'lucide-react';
 
 export const LibraryPanel = () => {
+    const { componentRegistry, categories, isRegistryLoading } = useStore();
+
     const onDragStart = (event: React.DragEvent, nodeType: string) => {
         event.dataTransfer.setData('application/reactflow', nodeType);
         event.dataTransfer.effectAllowed = 'move';
     };
+
+    if (isRegistryLoading) {
+        return (
+            <div className="w-64 border-r bg-slate-50 flex flex-col h-full items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p className="text-xs text-slate-500 mt-2">Loading components...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="w-64 border-r bg-slate-50 flex flex-col h-full overflow-hidden">
@@ -17,8 +29,8 @@ export const LibraryPanel = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto p-3 space-y-6">
-                {CATEGORIES.map((category) => {
-                    const components = Object.values(COMPONENT_REGISTRY).filter(
+                {categories.map((category) => {
+                    const components = Object.values(componentRegistry).filter(
                         (c) => c.category === category
                     );
 
@@ -31,7 +43,7 @@ export const LibraryPanel = () => {
                             </h3>
                             <div className="grid grid-cols-1 gap-1">
                                 {components.map((component) => {
-                                    const Icon = component.icon;
+                                    const Icon = (LucideIcons as any)[component.icon] || LucideIcons.Box;
                                     return (
                                         <div
                                             key={component.type}
