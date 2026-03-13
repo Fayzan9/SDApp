@@ -139,18 +139,62 @@ export const COMPONENT_REGISTRY: Record<string, ComponentDefinition> = {
         icon: Globe,
         description: 'Content Delivery Network for static assets.',
         configSchema: [
-            { name: 'edge_locations', label: 'Edge Locations', type: 'number', default: 10 },
+            { name: 'hit_rate', label: 'Hit Rate', type: 'number', default: 90, unit: '%' },
+            { name: 'latency', label: 'Edge Latency', type: 'number', default: 10, unit: 'ms' },
+        ],
+        ports: { inputs: 1, outputs: 1 }
+    },
+    firewall: {
+        type: 'firewall',
+        label: 'Firewall',
+        category: 'Security',
+        icon: ShieldCheck,
+        description: 'Filters incoming traffic based on security rules.',
+        configSchema: [
+            { name: 'drop_rate', label: 'Drop Rate', type: 'number', default: 0, unit: '%' },
+        ],
+        ports: { inputs: 1, outputs: 1 }
+    },
+    lambda_function: {
+        type: 'lambda_function',
+        label: 'Serverless Func',
+        category: 'Compute',
+        icon: Zap,
+        description: 'Event-driven serverless computing.',
+        configSchema: [
+            { name: 'cold_start_latency', label: 'Cold Start', type: 'number', default: 200, unit: 'ms' },
+            { name: 'execution_time', label: 'Exec Time', type: 'number', default: 50, unit: 'ms' },
+        ],
+        ports: { inputs: 1, outputs: 1 }
+    },
+    blob_storage: {
+        type: 'blob_storage',
+        label: 'Blob Storage',
+        category: 'Storage',
+        icon: HardDrive,
+        description: 'Unstructured object storage (e.g. S3).',
+        configSchema: [
+            { name: 'latency', label: 'Access Latency', type: 'number', default: 100, unit: 'ms' },
         ],
         ports: { inputs: 1, outputs: 0 }
     },
-    queue: {
-        type: 'queue',
+    message_queue: {
+        type: 'message_queue',
         label: 'Message Queue',
         category: 'Messaging',
         icon: MessageSquare,
         description: 'Asynchronous message broker.',
+        configSchema: [],
+        ports: { inputs: 1, outputs: 1 }
+    },
+    pub_sub: {
+        type: 'pub_sub',
+        label: 'Pub/Sub',
+        category: 'Messaging',
+        icon: Activity,
+        description: 'Asynchronous event bus for fan-out messaging.',
         configSchema: [
-            { name: 'retention', label: 'Retention', type: 'number', default: 24, unit: 'h' },
+            { name: 'latency', label: 'Bus Latency', type: 'number', default: 5, unit: 'ms' },
         ],
         ports: { inputs: 1, outputs: 1 }
     }
