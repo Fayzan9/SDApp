@@ -11,25 +11,7 @@ export const ConfigPanel = () => {
     const componentDef = selectedNode ? componentRegistry[selectedNode.data.type as string] : null;
 
     if (!selectedNode || !componentDef) {
-        return (
-            <div className="w-80 border-l bg-slate-50 flex flex-col h-full overflow-hidden">
-                <div className="p-4 border-b bg-white">
-                    <h2 className="font-bold text-slate-800 tracking-tight flex items-center gap-2">
-                        <Settings2 size={18} className="text-slate-400" />
-                        Properties
-                    </h2>
-                </div>
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50/50">
-                    <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm mb-4">
-                        <Info size={24} className="text-slate-200" />
-                    </div>
-                    <h3 className="text-sm font-semibold text-slate-400">No Component Selected</h3>
-                    <p className="text-xs text-slate-400 mt-2 max-w-[150px]">
-                        Select a component on the canvas to configure its parameters.
-                    </p>
-                </div>
-            </div>
-        );
+        return null;
     }
 
     const handleConfigChange = (name: string, value: any) => {

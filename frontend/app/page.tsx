@@ -18,7 +18,8 @@ export default function Home() {
     isSimulating,
     startSimulation,
     stopSimulation,
-    fetchComponents
+    fetchComponents,
+    selectedNodeId
   } = useStore();
   const [isEditingName, setIsEditingName] = useState(false);
   const [savedDesigns, setSavedDesigns] = useState<any[]>([]);
@@ -156,7 +157,7 @@ export default function Home() {
       <div className="flex flex-1 overflow-hidden relative">
         <LibraryPanel />
         <Canvas />
-        <ConfigPanel />
+        {selectedNodeId && <ConfigPanel />}
         <MetricsPanel />
       </div>
     </main>
