@@ -2,7 +2,7 @@
 
 SDApp is a powerful, interactive tool designed to help developers and system architects visualize, design, and simulate complex system architectures. Whether you're planning a high-traffic web application or learning about distributed systems, SDApp provides a hands-on environment to test your designs.
 
-![SDApp Header Placeholder](https://via.placeholder.com/1200x400?text=SDApp+Visual+Architecture+Simulator)
+![SDApp Interface](./application_screenshot.png)
 
 ## 🚀 Key Features
 
