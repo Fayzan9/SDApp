@@ -5,7 +5,7 @@ import { ConfigPanel } from '@/components/config/ConfigPanel';
 import { useStore } from '@/store/systemStore';
 import { persistence } from '@/lib/persistence';
 import { useState, useEffect } from 'react';
-import { Save, Trash2, FolderOpen, PencilLine, Play, Square, Activity } from 'lucide-react';
+import { Save, Trash2, FolderOpen, PencilLine, Play, Square, Activity, Layout } from 'lucide-react';
 import MetricsPanel from '@/components/Simulation/MetricsPanel';
 
 export default function Home() {
@@ -19,15 +19,20 @@ export default function Home() {
     startSimulation,
     stopSimulation,
     fetchComponents,
+    fetchTemplates,
+    templates,
+    loadTemplate,
     selectedNodeId
   } = useStore();
   const [isEditingName, setIsEditingName] = useState(false);
   const [savedDesigns, setSavedDesigns] = useState<any[]>([]);
   const [showLoadMenu, setShowLoadMenu] = useState(false);
+  const [showTemplateMenu, setShowTemplateMenu] = useState(false);
 
   useEffect(() => {
     setSavedDesigns(persistence.getAll());
     fetchComponents();
+    fetchTemplates();
   }, []);
 
   const handleSave = () => {
@@ -79,7 +84,52 @@ export default function Home() {
         <div className="flex items-center gap-2">
           <div className="relative">
             <button
-              onClick={() => setShowLoadMenu(!showLoadMenu)}
+              onClick={() => {
+                setShowTemplateMenu(!showTemplateMenu);
+                setShowLoadMenu(false);
+              }}
+              className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all flex items-center gap-2"
+            >
+              <Layout size={16} />
+              Templates
+            </button>
+
+            {showTemplateMenu && (
+              <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-2">
+                <div className="px-3 py-1 mb-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
+                    Architecture Templates
+                  </span>
+                </div>
+                {templates.length === 0 ? (
+                  <div className="px-4 py-3 text-xs text-slate-400 italic">No templates available</div>
+                ) : (
+                  templates.map((template) => (
+                    <button
+                      key={template.id}
+                      onClick={() => {
+                        loadTemplate(template.id);
+                        setShowTemplateMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors flex flex-col group"
+                    >
+                      <span className="font-semibold">{template.name}</span>
+                      <span className="text-[10px] text-slate-500 group-hover:text-blue-500 line-clamp-2">
+                        {template.description}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowLoadMenu(!showLoadMenu);
+                setShowTemplateMenu(false);
+              }}
               className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all flex items-center gap-2"
             >
               <FolderOpen size={16} />

@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from engine.core import SimulationEngine
 from engine.parser import GraphParser
 from engine.registry import ComponentRegistry
+from engine.templates import get_templates
 
 app = FastAPI(title="SDApp Simulation Engine")
 
@@ -53,6 +54,10 @@ async def health_check():
 @app.get("/api/components")
 async def get_components():
     return ComponentRegistry.get_all_metadata()
+
+@app.get("/api/templates")
+async def get_all_templates():
+    return get_templates()
 
 @app.websocket("/ws/simulate")
 async def websocket_simulate(websocket: WebSocket):

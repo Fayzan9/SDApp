@@ -16,7 +16,7 @@ import { validateConnection } from '@/lib/topologyValidator';
 import { persistence } from '@/lib/persistence';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
-import { componentApi, ComponentDefinition } from '@/lib/componentApi';
+import { componentApi, ComponentDefinition, Template } from '@/lib/componentApi';
 import * as LucideIcons from 'lucide-react';
 
 interface SystemState {
@@ -28,6 +28,7 @@ interface SystemState {
 
     // Component Registry State
     componentRegistry: Record<string, ComponentDefinition>;
+    templates: Template[];
     categories: string[];
     isRegistryLoading: boolean;
 
@@ -67,6 +68,8 @@ interface SystemState {
 
     // Registry Actions
     fetchComponents: () => Promise<void>;
+    fetchTemplates: () => Promise<void>;
+    loadTemplate: (templateId: string) => void;
 }
 
 interface ClipboardData {
@@ -89,6 +92,7 @@ export const useStore = create<SystemState>((set, get) => ({
         avgLatency: 0,
     },
     componentRegistry: {},
+    templates: [],
     categories: [],
     isRegistryLoading: false,
 
@@ -337,6 +341,30 @@ export const useStore = create<SystemState>((set, get) => ({
             console.error('Failed to fetch components:', error);
             set({ isRegistryLoading: false });
             toast.error('Failed to load components from backend');
+        }
+    },
+
+    fetchTemplates: async () => {
+        try {
+            const templates = await componentApi.getTemplates();
+            set({ templates });
+        } catch (error) {
+            console.error('Failed to fetch templates:', error);
+        }
+    },
+
+    loadTemplate: (templateId: string) => {
+        const { templates } = get();
+        const template = templates.find(t => t.id === templateId);
+        if (template) {
+            set({
+                systemId: uuidv4(), // New ID so it saves as new
+                systemName: `${template.name} (Copy)`,
+                nodes: template.graph.nodes,
+                edges: template.graph.edges,
+                selectedNodeId: null
+            });
+            toast.success(`Loaded template: ${template.name}`);
         }
     }
 }));

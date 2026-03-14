@@ -20,6 +20,16 @@ export interface ComponentDefinition {
     };
 }
 
+export interface Template {
+    id: string;
+    name: string;
+    description: string;
+    graph: {
+        nodes: any[];
+        edges: any[];
+    };
+}
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 export const componentApi = {
@@ -32,6 +42,19 @@ export const componentApi = {
             return await response.json();
         } catch (error) {
             console.error('Error fetching components:', error);
+            return [];
+        }
+    },
+
+    async getTemplates(): Promise<Template[]> {
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/templates`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch templates');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching templates:', error);
             return [];
         }
     }
