@@ -15,6 +15,8 @@ class SimulationEngine:
             "total_requests": 0,
             "completed_requests": 0,
             "failed_requests": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
             "latencies": [],
             "start_times": {} # request_id -> start_time
         }
@@ -57,7 +59,9 @@ class SimulationEngine:
                 "failed_requests": self.stats["failed_requests"],
                 "p50_latency": round(p50 * 1000, 2), # ms
                 "p99_latency": round(p99 * 1000, 2), # ms
-                "throughput": round(self.stats["completed_requests"] / max(self.env.now, 1), 2)
+                "throughput": round(self.stats["completed_requests"] / max(self.env.now, 1), 2),
+                "cache_hits": self.stats["cache_hits"],
+                "cache_misses": self.stats["cache_misses"]
             }
         }
         self.event_callback(stats_event)
@@ -99,10 +103,17 @@ class SimulationEngine:
             if request_id and request_id in self.stats["start_times"]:
                 latency = self.env.now - self.stats["start_times"][request_id]
                 self.stats["latencies"].append(latency)
+                # Keep a sliding window of the last 1000 latencies
+                if len(self.stats["latencies"]) > 1000:
+                    self.stats["latencies"].pop(0)
                 del self.stats["start_times"][request_id]
         
-        elif event_type == "FAILURE":
+        if event_type == "FAILURE":
             self.stats["failed_requests"] += 1
+        elif event_type == "CACHE_HIT":
+            self.stats["cache_hits"] += 1
+        elif event_type == "CACHE_MISS":
+            self.stats["cache_misses"] += 1
 
         print(f"[SimEngine] Event: {event_type} | Source: {source_id} | Target: {target_id} | Now: {self.env.now}")
         self.event_callback(event)

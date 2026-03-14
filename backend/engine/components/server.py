@@ -1,15 +1,16 @@
 import simpy
-from typing import Any, Dict
+from typing import Any, Dict, List
 from .base import BaseComponent
 
 class Server(BaseComponent):
     registry_type = "server"
 
-    def __init__(self, engine, component_id: str, config: Dict[str, Any]):
+    def __init__(self, engine, component_id: str, config: Dict[str, Any], targets: List[str] = None):
         super().__init__(engine, component_id, config)
         self.latency = config.get("latency", 50) / 1000.0
         self.capacity = config.get("instances", 1)
         self.resource = simpy.Resource(self.env, capacity=self.capacity)
+        self.targets = targets or []
 
     @classmethod
     def get_metadata(cls):
@@ -46,4 +47,12 @@ class Server(BaseComponent):
             yield req
             self.engine.emit_event("NODE_PROCESSING", self.id, data={"request_id": request_id})
             yield self.env.timeout(self.latency)
-            self.engine.emit_event("REQUEST_COMPLETED", self.id, data={"request_id": request_id})
+            
+            if self.targets:
+                target_id = self.targets[0]
+                print(f"[Server {self.id}] Forwarding request {request_id} to {target_id}")
+                target = self.engine.components.get(target_id)
+                if target and hasattr(target, "handle_request"):
+                    yield self.env.process(target.handle_request(request_id, self.id))
+            else:
+                self.engine.emit_event("REQUEST_COMPLETED", self.id, data={"request_id": request_id})

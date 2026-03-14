@@ -21,12 +21,17 @@ class Cache(BaseComponent):
             "description": "In-memory data store for fast access.",
             "config_schema": [
                 {"name": "hit_rate", "label": "Hit Rate", "type": "number", "default": 80, "unit": "%"},
+                {"name": "latency", "label": "Cache Latency", "type": "number", "default": 5, "unit": "ms"},
                 {"name": "ttl", "label": "Default TTL", "type": "number", "default": 3600, "unit": "s"},
             ],
             "ports": {"inputs": 1, "outputs": 1}
         }
 
     def handle_request(self, request_id: str, source_id: str):
+        if not self.is_alive:
+            self.engine.emit_event("FAILURE", self.id, data={"request_id": request_id, "reason": "Cache offline"})
+            return
+
         self.engine.emit_event("REQUEST_MOVED", source_id, self.id, data={"request_id": request_id})
         yield self.env.timeout(self.latency)
         
@@ -41,3 +46,6 @@ class Cache(BaseComponent):
                 target = self.engine.components.get(target_id)
                 if target and hasattr(target, "handle_request"):
                     yield self.env.process(target.handle_request(request_id, self.id))
+            else:
+                # If no targets but it's a miss, it fails
+                self.engine.emit_event("FAILURE", self.id, data={"request_id": request_id, "reason": "Cache miss with no origin"})

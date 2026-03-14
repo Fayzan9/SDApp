@@ -22,14 +22,25 @@ class Database(BaseComponent):
             "config_schema": [
                 {"name": "type", "label": "DB Type", "type": "select", "default": "postgresql", "options": ["postgresql", "mongodb", "mysql", "redis"]},
                 {"name": "latency", "label": "Query Latency", "type": "number", "default": 100, "unit": "ms"},
+                {"name": "capacity", "label": "Max Connections", "type": "number", "default": 10, "unit": "conn"},
             ],
             "ports": {"inputs": 1, "outputs": 0}
         }
 
     def handle_request(self, request_id: str, source_id: str):
+        if not self.is_alive:
+            self.engine.emit_event("FAILURE", self.id, data={"request_id": request_id, "reason": "Database offline"})
+            return
+
         self.engine.emit_event("REQUEST_MOVED", source_id, self.id, data={"request_id": request_id})
+        
+        # Check if resource is congested
+        if self.resource.count >= self.resource.capacity:
+             self.engine.emit_event("NODE_CONGESTED", self.id, data={"request_id": request_id, "queue": len(self.resource.queue)})
+
         with self.resource.request() as req:
             yield req
+            print(f"[Database {self.id}] Querying database for {request_id}")
             self.engine.emit_event("DB_QUERY", self.id, data={"request_id": request_id})
             yield self.env.timeout(self.latency)
             self.engine.emit_event("REQUEST_COMPLETED", self.id, data={"request_id": request_id})

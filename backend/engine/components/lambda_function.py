@@ -27,6 +27,10 @@ class LambdaFunction(BaseComponent):
         }
 
     def handle_request(self, request_id: str, source_id: str):
+        if not self.is_alive:
+            self.engine.emit_event("FAILURE", self.id, data={"request_id": request_id, "reason": "Lambda offline"})
+            return
+
         self.engine.emit_event("REQUEST_MOVED", source_id, self.id, data={"request_id": request_id})
         
         delay = self.exec_time
@@ -39,8 +43,10 @@ class LambdaFunction(BaseComponent):
         self.engine.emit_event("LAMBDA_EXECUTED", self.id, data={"request_id": request_id})
         
         if self.targets:
-            # Fan out to all targets in parallel
+            # Forward the request to targets
             for target_id in self.targets:
                 target = self.engine.components.get(target_id)
                 if target and hasattr(target, "handle_request"):
                     yield self.env.process(target.handle_request(request_id, self.id))
+        else:
+            self.engine.emit_event("REQUEST_COMPLETED", self.id, data={"request_id": request_id})

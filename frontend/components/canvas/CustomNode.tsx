@@ -6,10 +6,32 @@ import { cn } from '@/lib/utils';
 import * as LucideIcons from 'lucide-react';
 
 export const CustomNode = memo(({ id, data, selected }: NodeProps) => {
-    const { componentRegistry, isSimulating, offlineNodes, terminateNode, resurrectNode } = useStore();
+    const { componentRegistry, isSimulating, offlineNodes, terminateNode, resurrectNode, simEvents } = useStore();
+    const [pulse, setPulse] = React.useState<string | null>(null);
     const componentDef = componentRegistry[data.type as string];
     const isOffline = offlineNodes.includes(id);
     const Icon = componentDef ? (LucideIcons as any)[componentDef.icon] || LucideIcons.Box : null;
+
+    // Listen for events related to this node
+    React.useEffect(() => {
+        if (!isSimulating) {
+            setPulse(null);
+            return;
+        }
+        const lastEvent = simEvents[simEvents.length - 1];
+        if (lastEvent && (lastEvent.source_id === id || lastEvent.target_id === id)) {
+            const pulseEvents = [
+                'CACHE_HIT', 'CACHE_MISS', 'DB_QUERY', 
+                'NODE_PROCESSING', 'LAMBDA_COLD_START', 
+                'LAMBDA_EXECUTED', 'GATEWAY_ROUTING'
+            ];
+            if (pulseEvents.includes(lastEvent.event_type)) {
+                setPulse(lastEvent.event_type);
+                const timer = setTimeout(() => setPulse(null), 400);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [simEvents, id, isSimulating]);
 
     const handleKill = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -26,7 +48,14 @@ export const CustomNode = memo(({ id, data, selected }: NodeProps) => {
             className={cn(
                 "group flex flex-col items-center gap-2 p-3 rounded-xl border-2 bg-white transition-all min-w-[120px] relative",
                 selected ? "border-blue-500 shadow-lg ring-4 ring-blue-50" : "border-slate-200 hover:border-slate-300 shadow-sm",
-                isOffline && "border-rose-600 bg-rose-50 grayscale-0 shadow-[0_0_20px_rgba(225,29,72,0.2)] ring-4 ring-rose-500/20"
+                isOffline && "border-rose-600 bg-rose-50 grayscale-0 shadow-[0_0_20px_rgba(225,29,72,0.2)] ring-4 ring-rose-500/20",
+                pulse === 'CACHE_HIT' && "border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.4)]",
+                pulse === 'CACHE_MISS' && "border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)]",
+                pulse === 'DB_QUERY' && "border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.4)]",
+                pulse === 'NODE_PROCESSING' && "border-blue-400 shadow-[0_0_15px_rgba(96,165,250,0.4)]",
+                pulse === 'LAMBDA_COLD_START' && "border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.4)]",
+                pulse === 'LAMBDA_EXECUTED' && "border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.4)]",
+                pulse === 'GATEWAY_ROUTING' && "border-slate-500 shadow-[0_0_15px_rgba(100,116,139,0.4)]"
             )}
         >
             {/* Input Handle */}
@@ -36,9 +65,26 @@ export const CustomNode = memo(({ id, data, selected }: NodeProps) => {
                     position={Position.Left}
                     className={cn(
                         "w-3.5 h-3.5 border-2 border-white bg-blue-500 !-left-2 transition-colors",
-                        isOffline && "bg-rose-600"
+                        isOffline && "bg-rose-600",
+                        pulse && "scale-125"
                     )}
                 />
+            )}
+
+            {/* Event Label (Floating) */}
+            {pulse && (
+                <div className={cn(
+                    "absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter text-white animate-bounce whitespace-nowrap z-50",
+                    pulse === 'CACHE_HIT' && "bg-emerald-500",
+                    pulse === 'CACHE_MISS' && "bg-amber-500",
+                    pulse === 'DB_QUERY' && "bg-indigo-500",
+                    pulse === 'NODE_PROCESSING' && "bg-blue-500",
+                    pulse === 'LAMBDA_COLD_START' && "bg-cyan-500",
+                    pulse === 'LAMBDA_EXECUTED' && "bg-purple-500",
+                    pulse === 'GATEWAY_ROUTING' && "bg-slate-500"
+                )}>
+                    {pulse.replace(/_/g, ' ')}
+                </div>
             )}
 
             {/* Chaos Overlay & Revive Action */}

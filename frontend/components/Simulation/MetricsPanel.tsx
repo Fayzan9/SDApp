@@ -148,6 +148,31 @@ export default function MetricsPanel() {
                             {simStats.failedRequests} <span className="text-[10px] text-slate-500">({errorRate}%)</span>
                         </span>
                     </div>
+
+                    {/* Cache Hit Rate */}
+                    <div className="pt-2">
+                        <div className="flex justify-between items-center mb-1.5">
+                            <div className="flex items-center gap-2">
+                                <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                                <span className="text-xs text-slate-400">Cache Hit Rate</span>
+                            </div>
+                            <span className="text-xs font-mono font-bold text-emerald-100">
+                                {simStats.cacheHits + simStats.cacheMisses > 0 
+                                    ? ((simStats.cacheHits / (simStats.cacheHits + simStats.cacheMisses)) * 100).toFixed(1)
+                                    : "0.0"}%
+                            </span>
+                        </div>
+                        <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-emerald-500 transition-all duration-500"
+                                style={{ 
+                                    width: `${simStats.cacheHits + simStats.cacheMisses > 0 
+                                        ? (simStats.cacheHits / (simStats.cacheHits + simStats.cacheMisses)) * 100
+                                        : 0}%` 
+                                }}
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-white/5">

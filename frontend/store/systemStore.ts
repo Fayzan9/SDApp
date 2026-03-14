@@ -42,6 +42,8 @@ interface SystemState {
         p50Latency: number;
         p99Latency: number;
         throughput: number;
+        cacheHits: number;
+        cacheMisses: number;
     };
     offlineNodes: string[];
 
@@ -99,6 +101,8 @@ export const useStore = create<SystemState>((set, get) => ({
         p50Latency: 0,
         p99Latency: 0,
         throughput: 0,
+        cacheHits: 0,
+        cacheMisses: 0,
     },
     offlineNodes: [],
     componentRegistry: {},
@@ -251,7 +255,9 @@ export const useStore = create<SystemState>((set, get) => ({
                 failedRequests: 0,
                 p50Latency: 0,
                 p99Latency: 0,
-                throughput: 0
+                throughput: 0,
+                cacheHits: 0,
+                cacheMisses: 0
             } 
         });
         service.startSimulation(graphData);
@@ -298,6 +304,8 @@ export const useStore = create<SystemState>((set, get) => ({
                     p50Latency: event.data.p50_latency,
                     p99Latency: event.data.p99_latency,
                     throughput: event.data.throughput,
+                    cacheHits: event.data.cache_hits !== undefined ? event.data.cache_hits : get().simStats.cacheHits,
+                    cacheMisses: event.data.cache_misses !== undefined ? event.data.cache_misses : get().simStats.cacheMisses,
                 },
                 simEvents: [...simEvents.slice(-50), event]
             });

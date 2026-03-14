@@ -24,8 +24,13 @@ class Gateway(BaseComponent):
         }
 
     def handle_request(self, request_id: str, source_id: str):
+        if not self.is_alive:
+            self.engine.emit_event("FAILURE", self.id, data={"request_id": request_id, "reason": "Gateway offline"})
+            return
+
         self.engine.emit_event("REQUEST_MOVED", source_id, self.id, data={"request_id": request_id})
-        yield self.env.timeout(self.latency)
+        # Gateway overhead
+        yield self.env.timeout(0.005) 
         self.engine.emit_event("GATEWAY_ROUTING", self.id, data={"request_id": request_id})
         
         if self.targets:
