@@ -10,6 +10,7 @@ class MessageQueue(BaseComponent):
         self.targets = targets
         self.store = simpy.Store(self.env)
         self.action = self.env.process(self.run())
+        self.current_idx = 0
 
     @classmethod
     def get_metadata(cls):
@@ -19,11 +20,17 @@ class MessageQueue(BaseComponent):
             "category": "Messaging",
             "icon": "MessageSquare",
             "description": "Asynchronous message broker.",
-            "config_schema": [],
+            "config_schema": [
+                {"name": "latency", "label": "Processing Delay", "type": "number", "default": 100, "unit": "ms"},
+            ],
             "ports": {"inputs": 1, "outputs": 1}
         }
 
     def handle_request(self, request_id: str, source_id: str):
+        if not self.is_alive:
+            self.engine.emit_event("FAILURE", self.id, data={"request_id": request_id, "reason": "Queue offline"})
+            return
+
         self.engine.emit_event("REQUEST_MOVED", source_id, self.id, data={"request_id": request_id})
         self.engine.emit_event("MSG_ENQUEUED", self.id, data={"request_id": request_id})
         yield self.store.put(request_id)
@@ -33,11 +40,15 @@ class MessageQueue(BaseComponent):
             request_id = yield self.store.get()
             self.engine.emit_event("MSG_DEQUEUED", self.id, data={"request_id": request_id})
             
-            # Message queues usually process asynchronously, let's trigger targets
+            # Distribute messages to workers/consumers (Round Robin)
             if self.targets:
-                for target_id in self.targets:
-                    target = self.engine.components.get(target_id)
-                    if target and hasattr(target, "handle_request"):
-                        self.env.process(target.handle_request(request_id, self.id))
+                target_id = self.targets[self.current_idx]
+                self.current_idx = (self.current_idx + 1) % len(self.targets)
+                
+                target = self.engine.components.get(target_id)
+                if target and hasattr(target, "handle_request"):
+                    self.env.process(target.handle_request(request_id, self.id))
             
-            yield self.env.timeout(0.1) # Small delay between processing
+            # Processing delay
+            latency = self.config.get("latency", 100) / 1000.0
+            yield self.env.timeout(latency)

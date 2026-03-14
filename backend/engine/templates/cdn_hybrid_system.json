@@ -1,0 +1,121 @@
+{
+    "name": "CDN + Dynamic Content System",
+    "description": "Hybrid architecture serving static content via CDN and dynamic content through application servers.",
+    "graph": {
+        "nodes": [
+            {
+                "id": "web-client",
+                "type": "custom",
+                "position": { "x": 100, "y": 300 },
+                "data": {
+                    "type": "web_client",
+                    "label": "Web Browser",
+                    "config": { "requests_per_sec": 20 }
+                }
+            },
+            {
+                "id": "cdn-edge",
+                "type": "custom",
+                "position": { "x": 300, "y": 150 },
+                "data": {
+                    "type": "cdn",
+                    "label": "CloudFront CDN",
+                    "config": { "hit_rate": 88, "latency": 12 }
+                }
+            },
+            {
+                "id": "static-origin",
+                "type": "custom",
+                "position": { "x": 500, "y": 150 },
+                "data": {
+                    "type": "blob_storage",
+                    "label": "S3 Static Assets",
+                    "config": { "latency": 100 }
+                }
+            },
+            {
+                "id": "api-gateway",
+                "type": "custom",
+                "position": { "x": 300, "y": 400 },
+                "data": {
+                    "type": "api_gateway",
+                    "label": "API Gateway",
+                    "config": { "timeout": 5000 }
+                }
+            },
+            {
+                "id": "load-balancer",
+                "type": "custom",
+                "position": { "x": 500, "y": 400 },
+                "data": {
+                    "type": "load_balancer",
+                    "label": "Application LB",
+                    "config": { "algorithm": "round_robin" }
+                }
+            },
+            {
+                "id": "app-server-1",
+                "type": "custom",
+                "position": { "x": 700, "y": 300 },
+                "data": {
+                    "type": "server",
+                    "label": "App Server 1",
+                    "config": { "instances": 2, "latency": 55, "failure_rate": 0.8 }
+                }
+            },
+            {
+                "id": "app-server-2",
+                "type": "custom",
+                "position": { "x": 700, "y": 450 },
+                "data": {
+                    "type": "server",
+                    "label": "App Server 2",
+                    "config": { "instances": 2, "latency": 55, "failure_rate": 0.8 }
+                }
+            },
+            {
+                "id": "redis-cache",
+                "type": "custom",
+                "position": { "x": 900, "y": 375 },
+                "data": {
+                    "type": "cache",
+                    "label": "Redis Cache",
+                    "config": { "hit_rate": 72, "latency": 6, "ttl": 2400 }
+                }
+            },
+            {
+                "id": "primary-db",
+                "type": "custom",
+                "position": { "x": 1100, "y": 375 },
+                "data": {
+                    "type": "database",
+                    "label": "MySQL Primary",
+                    "config": { "type": "mysql", "latency": 95, "capacity": 22 }
+                }
+            },
+            {
+                "id": "image-storage",
+                "type": "custom",
+                "position": { "x": 900, "y": 600 },
+                "data": {
+                    "type": "blob_storage",
+                    "label": "Image Storage",
+                    "config": { "latency": 85 }
+                }
+            }
+        ],
+        "edges": [
+            { "id": "e1", "source": "web-client", "target": "cdn-edge", "type": "packet", "animated": true },
+            { "id": "e2", "source": "web-client", "target": "api-gateway", "type": "packet", "animated": true },
+            { "id": "e3", "source": "cdn-edge", "target": "static-origin", "type": "packet", "animated": true },
+            { "id": "e4", "source": "api-gateway", "target": "load-balancer", "type": "packet", "animated": true },
+            { "id": "e5", "source": "load-balancer", "target": "app-server-1", "type": "packet", "animated": true },
+            { "id": "e6", "source": "load-balancer", "target": "app-server-2", "type": "packet", "animated": true },
+            { "id": "e7", "source": "app-server-1", "target": "redis-cache", "type": "packet", "animated": true },
+            { "id": "e8", "source": "app-server-2", "target": "redis-cache", "type": "packet", "animated": true },
+            { "id": "e9", "source": "redis-cache", "target": "primary-db", "type": "packet", "animated": true },
+            { "id": "e10", "source": "app-server-1", "target": "image-storage", "type": "packet", "animated": true },
+            { "id": "e11", "source": "app-server-2", "target": "image-storage", "type": "packet", "animated": true }
+        ]
+    }
+}

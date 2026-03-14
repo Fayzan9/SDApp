@@ -1,0 +1,143 @@
+{
+    "name": "E-Commerce Platform",
+    "description": "Production e-commerce system with security, caching, database, and async message processing.",
+    "graph": {
+        "nodes": [
+            {
+                "id": "web-client",
+                "type": "custom",
+                "position": { "x": 100, "y": 300 },
+                "data": {
+                    "type": "web_client",
+                    "label": "Web Shoppers",
+                    "config": { "requests_per_sec": 15 }
+                }
+            },
+            {
+                "id": "mobile-client",
+                "type": "custom",
+                "position": { "x": 100, "y": 450 },
+                "data": {
+                    "type": "mobile_client",
+                    "label": "Mobile App",
+                    "config": { "requests_per_sec": 10 }
+                }
+            },
+            {
+                "id": "firewall",
+                "type": "custom",
+                "position": { "x": 300, "y": 375 },
+                "data": {
+                    "type": "firewall",
+                    "label": "WAF",
+                    "config": { "drop_rate": 3 }
+                }
+            },
+            {
+                "id": "gateway",
+                "type": "custom",
+                "position": { "x": 500, "y": 375 },
+                "data": {
+                    "type": "api_gateway",
+                    "label": "API Gateway",
+                    "config": { "timeout": 5000 }
+                }
+            },
+            {
+                "id": "load-balancer",
+                "type": "custom",
+                "position": { "x": 700, "y": 375 },
+                "data": {
+                    "type": "load_balancer",
+                    "label": "Load Balancer",
+                    "config": { "algorithm": "round_robin" }
+                }
+            },
+            {
+                "id": "app-server-1",
+                "type": "custom",
+                "position": { "x": 900, "y": 250 },
+                "data": {
+                    "type": "server",
+                    "label": "App Server 1",
+                    "config": { "instances": 3, "latency": 60, "failure_rate": 0.5 }
+                }
+            },
+            {
+                "id": "app-server-2",
+                "type": "custom",
+                "position": { "x": 900, "y": 450 },
+                "data": {
+                    "type": "server",
+                    "label": "App Server 2",
+                    "config": { "instances": 3, "latency": 60, "failure_rate": 0.5 }
+                }
+            },
+            {
+                "id": "redis-cache",
+                "type": "custom",
+                "position": { "x": 1100, "y": 350 },
+                "data": {
+                    "type": "cache",
+                    "label": "Redis Cache",
+                    "config": { "hit_rate": 70, "latency": 5, "ttl": 1800 }
+                }
+            },
+            {
+                "id": "postgres-db",
+                "type": "custom",
+                "position": { "x": 1300, "y": 350 },
+                "data": {
+                    "type": "database",
+                    "label": "PostgreSQL",
+                    "config": { "type": "postgresql", "latency": 120, "capacity": 25 }
+                }
+            },
+            {
+                "id": "message-queue",
+                "type": "custom",
+                "position": { "x": 1100, "y": 550 },
+                "data": {
+                    "type": "message_queue",
+                    "label": "RabbitMQ",
+                    "config": {}
+                }
+            },
+            {
+                "id": "order-processor",
+                "type": "custom",
+                "position": { "x": 1300, "y": 550 },
+                "data": {
+                    "type": "lambda_function",
+                    "label": "Order Processor",
+                    "config": { "cold_start_latency": 180, "execution_time": 70 }
+                }
+            },
+            {
+                "id": "order-db",
+                "type": "custom",
+                "position": { "x": 1500, "y": 550 },
+                "data": {
+                    "type": "database",
+                    "label": "Orders DB",
+                    "config": { "type": "mongodb", "latency": 90, "capacity": 20 }
+                }
+            }
+        ],
+        "edges": [
+            { "id": "e1", "source": "web-client", "target": "firewall", "type": "packet", "animated": true },
+            { "id": "e2", "source": "mobile-client", "target": "firewall", "type": "packet", "animated": true },
+            { "id": "e3", "source": "firewall", "target": "gateway", "type": "packet", "animated": true },
+            { "id": "e4", "source": "gateway", "target": "load-balancer", "type": "packet", "animated": true },
+            { "id": "e5", "source": "load-balancer", "target": "app-server-1", "type": "packet", "animated": true },
+            { "id": "e6", "source": "load-balancer", "target": "app-server-2", "type": "packet", "animated": true },
+            { "id": "e7", "source": "app-server-1", "target": "redis-cache", "type": "packet", "animated": true },
+            { "id": "e8", "source": "app-server-2", "target": "redis-cache", "type": "packet", "animated": true },
+            { "id": "e9", "source": "redis-cache", "target": "postgres-db", "type": "packet", "animated": true },
+            { "id": "e10", "source": "app-server-1", "target": "message-queue", "type": "packet", "animated": true },
+            { "id": "e11", "source": "app-server-2", "target": "message-queue", "type": "packet", "animated": true },
+            { "id": "e12", "source": "message-queue", "target": "order-processor", "type": "packet", "animated": true },
+            { "id": "e13", "source": "order-processor", "target": "order-db", "type": "packet", "animated": true }
+        ]
+    }
+}

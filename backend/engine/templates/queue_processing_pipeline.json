@@ -1,0 +1,130 @@
+{
+    "name": "Message Queue Processing Pipeline",
+    "description": "Event-driven pipeline with message queues, async workers, and multiple storage backends.",
+    "graph": {
+        "nodes": [
+            {
+                "id": "web-client",
+                "type": "custom",
+                "position": { "x": 100, "y": 300 },
+                "data": {
+                    "type": "web_client",
+                    "label": "API Client",
+                    "config": { "requests_per_sec": 12 }
+                }
+            },
+            {
+                "id": "gateway",
+                "type": "custom",
+                "position": { "x": 300, "y": 300 },
+                "data": {
+                    "type": "api_gateway",
+                    "label": "API Gateway",
+                    "config": { "timeout": 6000 }
+                }
+            },
+            {
+                "id": "ingestion-server",
+                "type": "custom",
+                "position": { "x": 500, "y": 300 },
+                "data": {
+                    "type": "server",
+                    "label": "Ingestion Service",
+                    "config": { "instances": 2, "latency": 45, "failure_rate": 1 }
+                }
+            },
+            {
+                "id": "main-queue",
+                "type": "custom",
+                "position": { "x": 700, "y": 300 },
+                "data": {
+                    "type": "message_queue",
+                    "label": "Main Queue",
+                    "config": {}
+                }
+            },
+            {
+                "id": "event-router",
+                "type": "custom",
+                "position": { "x": 900, "y": 300 },
+                "data": {
+                    "type": "pub_sub",
+                    "label": "Event Router",
+                    "config": { "latency": 8 }
+                }
+            },
+            {
+                "id": "image-processor",
+                "type": "custom",
+                "position": { "x": 1100, "y": 150 },
+                "data": {
+                    "type": "lambda_function",
+                    "label": "Image Processor",
+                    "config": { "cold_start_latency": 350, "execution_time": 150 }
+                }
+            },
+            {
+                "id": "text-processor",
+                "type": "custom",
+                "position": { "x": 1100, "y": 300 },
+                "data": {
+                    "type": "lambda_function",
+                    "label": "Text Processor",
+                    "config": { "cold_start_latency": 180, "execution_time": 80 }
+                }
+            },
+            {
+                "id": "metadata-processor",
+                "type": "custom",
+                "position": { "x": 1100, "y": 450 },
+                "data": {
+                    "type": "lambda_function",
+                    "label": "Metadata Processor",
+                    "config": { "cold_start_latency": 200, "execution_time": 60 }
+                }
+            },
+            {
+                "id": "image-storage",
+                "type": "custom",
+                "position": { "x": 1300, "y": 150 },
+                "data": {
+                    "type": "blob_storage",
+                    "label": "Image Store",
+                    "config": { "latency": 90 }
+                }
+            },
+            {
+                "id": "text-db",
+                "type": "custom",
+                "position": { "x": 1300, "y": 300 },
+                "data": {
+                    "type": "database",
+                    "label": "Text DB",
+                    "config": { "type": "mongodb", "latency": 85, "capacity": 25 }
+                }
+            },
+            {
+                "id": "metadata-db",
+                "type": "custom",
+                "position": { "x": 1300, "y": 450 },
+                "data": {
+                    "type": "database",
+                    "label": "Metadata DB",
+                    "config": { "type": "postgresql", "latency": 70, "capacity": 30 }
+                }
+            }
+        ],
+        "edges": [
+            { "id": "e1", "source": "web-client", "target": "gateway", "type": "packet", "animated": true },
+            { "id": "e2", "source": "gateway", "target": "ingestion-server", "type": "packet", "animated": true },
+            { "id": "e3", "source": "ingestion-server", "target": "main-queue", "type": "packet", "animated": true },
+            { "id": "e4", "source": "main-queue", "target": "event-router", "type": "packet", "animated": true },
+            { "id": "e5", "source": "event-router", "target": "image-processor", "type": "packet", "animated": true },
+            { "id": "e6", "source": "event-router", "target": "text-processor", "type": "packet", "animated": true },
+            { "id": "e7", "source": "event-router", "target": "metadata-processor", "type": "packet", "animated": true },
+            { "id": "e8", "source": "image-processor", "target": "image-storage", "type": "packet", "animated": true },
+            { "id": "e9", "source": "text-processor", "target": "text-db", "type": "packet", "animated": true },
+            { "id": "e10", "source": "metadata-processor", "target": "metadata-db", "type": "packet", "animated": true }
+        ]
+    }
+}

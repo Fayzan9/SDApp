@@ -23,15 +23,13 @@ class GraphParser:
         # Instantiate components
         for node in nodes:
             node_id = node["id"]
-            node_type = node["type"]
-            config = node.get("data", {})
+            node_data = node.get("data", {})
+            node_type = node_data.get("type", node.get("type"))  # Support both formats
+            config = node_data.get("config", {})
             targets = out_edges.get(node_id, [])
             
             comp_class = ComponentRegistry.get_component_class(node_type)
             if comp_class:
-                # Some legacy config mapping might be needed if they differ by type
-                # but with the new system, we expect the config to match what's in metadata
-                
                 # Check if component takes targets (clients, load balancers, etc.)
                 import inspect
                 sig = inspect.signature(comp_class.__init__)

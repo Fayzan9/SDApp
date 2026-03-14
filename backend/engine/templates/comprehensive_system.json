@@ -1,0 +1,296 @@
+{
+    "name": "Comprehensive System Architecture",
+    "description": "Full-featured system demonstrating all available components: clients, security, CDN, API gateway, load balancing, caching, databases, serverless, messaging, and pub/sub.",
+    "graph": {
+        "nodes": [
+            {
+                "id": "web-client-1",
+                "type": "custom",
+                "position": { "x": 50, "y": 150 },
+                "data": {
+                    "type": "web_client",
+                    "label": "Web Browser",
+                    "config": { "requests_per_sec": 8 }
+                }
+            },
+            {
+                "id": "mobile-client-1",
+                "type": "custom",
+                "position": { "x": 50, "y": 300 },
+                "data": {
+                    "type": "mobile_client",
+                    "label": "Mobile App",
+                    "config": { "requests_per_sec": 5 }
+                }
+            },
+            {
+                "id": "firewall-1",
+                "type": "custom",
+                "position": { "x": 250, "y": 225 },
+                "data": {
+                    "type": "firewall",
+                    "label": "Firewall",
+                    "config": { "drop_rate": 2 }
+                }
+            },
+            {
+                "id": "cdn-1",
+                "type": "custom",
+                "position": { "x": 450, "y": 100 },
+                "data": {
+                    "type": "cdn",
+                    "label": "CDN Edge",
+                    "config": { "hit_rate": 85, "latency": 15 }
+                }
+            },
+            {
+                "id": "gateway-1",
+                "type": "custom",
+                "position": { "x": 450, "y": 300 },
+                "data": {
+                    "type": "api_gateway",
+                    "label": "API Gateway",
+                    "config": { "timeout": 5000 }
+                }
+            },
+            {
+                "id": "lb-1",
+                "type": "custom",
+                "position": { "x": 650, "y": 300 },
+                "data": {
+                    "type": "load_balancer",
+                    "label": "Load Balancer",
+                    "config": { "algorithm": "round_robin" }
+                }
+            },
+            {
+                "id": "server-1",
+                "type": "custom",
+                "position": { "x": 850, "y": 200 },
+                "data": {
+                    "type": "server",
+                    "label": "App Server 1",
+                    "config": { "instances": 2, "latency": 50, "failure_rate": 1 }
+                }
+            },
+            {
+                "id": "server-2",
+                "type": "custom",
+                "position": { "x": 850, "y": 350 },
+                "data": {
+                    "type": "server",
+                    "label": "App Server 2",
+                    "config": { "instances": 2, "latency": 50, "failure_rate": 1 }
+                }
+            },
+            {
+                "id": "cache-1",
+                "type": "custom",
+                "position": { "x": 1050, "y": 275 },
+                "data": {
+                    "type": "cache",
+                    "label": "Redis Cache",
+                    "config": { "hit_rate": 75, "latency": 5, "ttl": 3600 }
+                }
+            },
+            {
+                "id": "database-1",
+                "type": "custom",
+                "position": { "x": 1250, "y": 275 },
+                "data": {
+                    "type": "database",
+                    "label": "PostgreSQL DB",
+                    "config": { "type": "postgresql", "latency": 100, "capacity": 20 }
+                }
+            },
+            {
+                "id": "mq-1",
+                "type": "custom",
+                "position": { "x": 1050, "y": 500 },
+                "data": {
+                    "type": "message_queue",
+                    "label": "Message Queue",
+                    "config": {}
+                }
+            },
+            {
+                "id": "pubsub-1",
+                "type": "custom",
+                "position": { "x": 1250, "y": 500 },
+                "data": {
+                    "type": "pub_sub",
+                    "label": "Event Bus",
+                    "config": { "latency": 5 }
+                }
+            },
+            {
+                "id": "lambda-1",
+                "type": "custom",
+                "position": { "x": 1450, "y": 400 },
+                "data": {
+                    "type": "lambda_function",
+                    "label": "Analytics Lambda",
+                    "config": { "cold_start_latency": 150, "execution_time": 60 }
+                }
+            },
+            {
+                "id": "lambda-2",
+                "type": "custom",
+                "position": { "x": 1450, "y": 550 },
+                "data": {
+                    "type": "lambda_function",
+                    "label": "Notification Lambda",
+                    "config": { "cold_start_latency": 200, "execution_time": 40 }
+                }
+            },
+            {
+                "id": "blob-storage-1",
+                "type": "custom",
+                "position": { "x": 1650, "y": 475 },
+                "data": {
+                    "type": "blob_storage",
+                    "label": "S3 Storage",
+                    "config": { "latency": 80 }
+                }
+            },
+            {
+                "id": "blob-storage-2",
+                "type": "custom",
+                "position": { "x": 700, "y": 100 },
+                "data": {
+                    "type": "blob_storage",
+                    "label": "CDN Origin",
+                    "config": { "latency": 120 }
+                }
+            }
+        ],
+        "edges": [
+            {
+                "id": "e-wc-fw",
+                "source": "web-client-1",
+                "target": "firewall-1",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-mc-fw",
+                "source": "mobile-client-1",
+                "target": "firewall-1",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-fw-cdn",
+                "source": "firewall-1",
+                "target": "cdn-1",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-fw-gw",
+                "source": "firewall-1",
+                "target": "gateway-1",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-cdn-origin",
+                "source": "cdn-1",
+                "target": "blob-storage-2",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-gw-lb",
+                "source": "gateway-1",
+                "target": "lb-1",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-lb-s1",
+                "source": "lb-1",
+                "target": "server-1",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-lb-s2",
+                "source": "lb-1",
+                "target": "server-2",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-s1-cache",
+                "source": "server-1",
+                "target": "cache-1",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-s2-cache",
+                "source": "server-2",
+                "target": "cache-1",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-cache-db",
+                "source": "cache-1",
+                "target": "database-1",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-s1-mq",
+                "source": "server-1",
+                "target": "mq-1",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-s2-mq",
+                "source": "server-2",
+                "target": "mq-1",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-mq-ps",
+                "source": "mq-1",
+                "target": "pubsub-1",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-ps-l1",
+                "source": "pubsub-1",
+                "target": "lambda-1",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-ps-l2",
+                "source": "pubsub-1",
+                "target": "lambda-2",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-l1-blob",
+                "source": "lambda-1",
+                "target": "blob-storage-1",
+                "type": "packet",
+                "animated": true
+            },
+            {
+                "id": "e-l2-blob",
+                "source": "lambda-2",
+                "target": "blob-storage-1",
+                "type": "packet",
+                "animated": true
+            }
+        ]
+    }
+}

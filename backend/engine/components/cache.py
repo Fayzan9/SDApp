@@ -10,6 +10,7 @@ class Cache(BaseComponent):
         self.hit_rate = config.get("hit_rate", 80) / 100.0
         self.latency = config.get("latency", 5) / 1000.0
         self.targets = targets
+        self.current_idx = 0
 
     @classmethod
     def get_metadata(cls):
@@ -42,10 +43,11 @@ class Cache(BaseComponent):
         else:
             self.engine.emit_event("CACHE_MISS", self.id, data={"request_id": request_id})
             if self.targets:
-                target_id = self.targets[0]
+                target_id = self.targets[self.current_idx]
+                self.current_idx = (self.current_idx + 1) % len(self.targets)
+                
                 target = self.engine.components.get(target_id)
                 if target and hasattr(target, "handle_request"):
                     yield self.env.process(target.handle_request(request_id, self.id))
             else:
-                # If no targets but it's a miss, it fails
                 self.engine.emit_event("FAILURE", self.id, data={"request_id": request_id, "reason": "Cache miss with no origin"})

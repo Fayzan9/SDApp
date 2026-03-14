@@ -8,6 +8,7 @@ class Gateway(BaseComponent):
         super().__init__(engine, component_id, config)
         self.targets = targets
         self.latency = config.get("timeout", 3000) / 1000.0 # Using timeout as a proxy for latency config
+        self.current_idx = 0
 
     @classmethod
     def get_metadata(cls):
@@ -34,7 +35,13 @@ class Gateway(BaseComponent):
         self.engine.emit_event("GATEWAY_ROUTING", self.id, data={"request_id": request_id})
         
         if self.targets:
-            target_id = self.targets[0] # Simple routing for now
+            # Distribute traffic across all services (Standard Gateway Routing)
+            target_id = self.targets[self.current_idx]
+            self.current_idx = (self.current_idx + 1) % len(self.targets)
+            print(f"[Gateway {self.id}] Routing request {request_id} to service: {target_id}")
+            
             target = self.engine.components.get(target_id)
             if target and hasattr(target, "handle_request"):
                 yield self.env.process(target.handle_request(request_id, self.id))
+        else:
+            self.engine.emit_event("REQUEST_COMPLETED", self.id, data={"request_id": request_id})

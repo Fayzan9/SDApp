@@ -10,6 +10,7 @@ class Firewall(BaseComponent):
         self.drop_rate = config.get("drop_rate", 0) / 100.0
         self.latency = config.get("latency", 2) / 1000.0
         self.targets = targets
+        self.current_idx = 0
 
     @classmethod
     def get_metadata(cls):
@@ -26,6 +27,10 @@ class Firewall(BaseComponent):
         }
 
     def handle_request(self, request_id: str, source_id: str):
+        if not self.is_alive:
+            self.engine.emit_event("FAILURE", self.id, data={"request_id": request_id, "reason": "Firewall offline"})
+            return
+
         self.engine.emit_event("REQUEST_MOVED", source_id, self.id, data={"request_id": request_id})
         yield self.env.timeout(self.latency)
         
@@ -35,7 +40,11 @@ class Firewall(BaseComponent):
         else:
             self.engine.emit_event("FIREWALL_ALLOWED", self.id, data={"request_id": request_id})
             if self.targets:
-                target_id = self.targets[0]
+                target_id = self.targets[self.current_idx]
+                self.current_idx = (self.current_idx + 1) % len(self.targets)
+                
                 target = self.engine.components.get(target_id)
                 if target and hasattr(target, "handle_request"):
                     yield self.env.process(target.handle_request(request_id, self.id))
+            else:
+                self.engine.emit_event("REQUEST_COMPLETED", self.id, data={"request_id": request_id})

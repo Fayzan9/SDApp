@@ -49,10 +49,19 @@ class Server(BaseComponent):
             yield self.env.timeout(self.latency)
             
             if self.targets:
+                # Forward to first target synchronously (main request path - typically cache/database)
                 target_id = self.targets[0]
                 print(f"[Server {self.id}] Forwarding request {request_id} to {target_id}")
                 target = self.engine.components.get(target_id)
                 if target and hasattr(target, "handle_request"):
                     yield self.env.process(target.handle_request(request_id, self.id))
+                
+                # Send async/fire-and-forget to additional targets (message queues, pub/sub, etc.)
+                if len(self.targets) > 1:
+                    for additional_target_id in self.targets[1:]:
+                        print(f"[Server {self.id}] Async sending {request_id} to {additional_target_id}")
+                        additional_target = self.engine.components.get(additional_target_id)
+                        if additional_target and hasattr(additional_target, "handle_request"):
+                            self.env.process(additional_target.handle_request(request_id, self.id))
             else:
                 self.engine.emit_event("REQUEST_COMPLETED", self.id, data={"request_id": request_id})

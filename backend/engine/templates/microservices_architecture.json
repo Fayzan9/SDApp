@@ -1,0 +1,154 @@
+{
+    "name": "Microservices Architecture",
+    "description": "Distributed microservices system with API gateway routing to independent services, each with their own database.",
+    "graph": {
+        "nodes": [
+            {
+                "id": "web-client",
+                "type": "custom",
+                "position": { "x": 100, "y": 400 },
+                "data": {
+                    "type": "web_client",
+                    "label": "Web Client",
+                    "config": { "requests_per_sec": 12 }
+                }
+            },
+            {
+                "id": "api-gateway",
+                "type": "custom",
+                "position": { "x": 300, "y": 400 },
+                "data": {
+                    "type": "api_gateway",
+                    "label": "API Gateway",
+                    "config": { "timeout": 4000 }
+                }
+            },
+            {
+                "id": "user-service-lb",
+                "type": "custom",
+                "position": { "x": 550, "y": 150 },
+                "data": {
+                    "type": "load_balancer",
+                    "label": "User Service LB",
+                    "config": { "algorithm": "round_robin" }
+                }
+            },
+            {
+                "id": "user-srv-1",
+                "type": "custom",
+                "position": { "x": 750, "y": 100 },
+                "data": {
+                    "type": "server",
+                    "label": "User Service 1",
+                    "config": { "instances": 2, "latency": 40, "failure_rate": 0.5 }
+                }
+            },
+            {
+                "id": "user-srv-2",
+                "type": "custom",
+                "position": { "x": 750, "y": 200 },
+                "data": {
+                    "type": "server",
+                    "label": "User Service 2",
+                    "config": { "instances": 2, "latency": 40, "failure_rate": 0.5 }
+                }
+            },
+            {
+                "id": "user-db",
+                "type": "custom",
+                "position": { "x": 950, "y": 150 },
+                "data": {
+                    "type": "database",
+                    "label": "User DB",
+                    "config": { "type": "postgresql", "latency": 80, "capacity": 15 }
+                }
+            },
+            {
+                "id": "product-service-lb",
+                "type": "custom",
+                "position": { "x": 550, "y": 400 },
+                "data": {
+                    "type": "load_balancer",
+                    "label": "Product Service LB",
+                    "config": { "algorithm": "round_robin" }
+                }
+            },
+            {
+                "id": "product-srv-1",
+                "type": "custom",
+                "position": { "x": 750, "y": 350 },
+                "data": {
+                    "type": "server",
+                    "label": "Product Service 1",
+                    "config": { "instances": 2, "latency": 50, "failure_rate": 0.5 }
+                }
+            },
+            {
+                "id": "product-srv-2",
+                "type": "custom",
+                "position": { "x": 750, "y": 450 },
+                "data": {
+                    "type": "server",
+                    "label": "Product Service 2",
+                    "config": { "instances": 2, "latency": 50, "failure_rate": 0.5 }
+                }
+            },
+            {
+                "id": "product-cache",
+                "type": "custom",
+                "position": { "x": 950, "y": 400 },
+                "data": {
+                    "type": "cache",
+                    "label": "Product Cache",
+                    "config": { "hit_rate": 85, "latency": 3, "ttl": 3600 }
+                }
+            },
+            {
+                "id": "product-db",
+                "type": "custom",
+                "position": { "x": 1150, "y": 400 },
+                "data": {
+                    "type": "database",
+                    "label": "Product DB",
+                    "config": { "type": "mongodb", "latency": 100, "capacity": 20 }
+                }
+            },
+            {
+                "id": "order-service",
+                "type": "custom",
+                "position": { "x": 550, "y": 650 },
+                "data": {
+                    "type": "server",
+                    "label": "Order Service",
+                    "config": { "instances": 3, "latency": 60, "failure_rate": 1 }
+                }
+            },
+            {
+                "id": "order-db",
+                "type": "custom",
+                "position": { "x": 750, "y": 650 },
+                "data": {
+                    "type": "database",
+                    "label": "Order DB",
+                    "config": { "type": "postgresql", "latency": 110, "capacity": 18 }
+                }
+            }
+        ],
+        "edges": [
+            { "id": "e1", "source": "web-client", "target": "api-gateway", "type": "packet", "animated": true },
+            { "id": "e2", "source": "api-gateway", "target": "user-service-lb", "type": "packet", "animated": true },
+            { "id": "e3", "source": "api-gateway", "target": "product-service-lb", "type": "packet", "animated": true },
+            { "id": "e4", "source": "api-gateway", "target": "order-service", "type": "packet", "animated": true },
+            { "id": "e5", "source": "user-service-lb", "target": "user-srv-1", "type": "packet", "animated": true },
+            { "id": "e6", "source": "user-service-lb", "target": "user-srv-2", "type": "packet", "animated": true },
+            { "id": "e7", "source": "user-srv-1", "target": "user-db", "type": "packet", "animated": true },
+            { "id": "e8", "source": "user-srv-2", "target": "user-db", "type": "packet", "animated": true },
+            { "id": "e9", "source": "product-service-lb", "target": "product-srv-1", "type": "packet", "animated": true },
+            { "id": "e10", "source": "product-service-lb", "target": "product-srv-2", "type": "packet", "animated": true },
+            { "id": "e11", "source": "product-srv-1", "target": "product-cache", "type": "packet", "animated": true },
+            { "id": "e12", "source": "product-srv-2", "target": "product-cache", "type": "packet", "animated": true },
+            { "id": "e13", "source": "product-cache", "target": "product-db", "type": "packet", "animated": true },
+            { "id": "e14", "source": "order-service", "target": "order-db", "type": "packet", "animated": true }
+        ]
+    }
+}

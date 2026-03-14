@@ -1,0 +1,119 @@
+{
+    "name": "Serverless Event-Driven System",
+    "description": "Cloud-native serverless architecture with Lambda functions, PubSub events, and object storage.",
+    "graph": {
+        "nodes": [
+            {
+                "id": "mobile-client",
+                "type": "custom",
+                "position": { "x": 100, "y": 350 },
+                "data": {
+                    "type": "mobile_client",
+                    "label": "Mobile App",
+                    "config": { "requests_per_sec": 8 }
+                }
+            },
+            {
+                "id": "api-gateway",
+                "type": "custom",
+                "position": { "x": 300, "y": 350 },
+                "data": {
+                    "type": "api_gateway",
+                    "label": "API Gateway",
+                    "config": { "timeout": 10000 }
+                }
+            },
+            {
+                "id": "ingestion-lambda",
+                "type": "custom",
+                "position": { "x": 500, "y": 350 },
+                "data": {
+                    "type": "lambda_function",
+                    "label": "Data Ingestion",
+                    "config": { "cold_start_latency": 250, "execution_time": 80 }
+                }
+            },
+            {
+                "id": "event-bus",
+                "type": "custom",
+                "position": { "x": 700, "y": 350 },
+                "data": {
+                    "type": "pub_sub",
+                    "label": "EventBridge",
+                    "config": { "latency": 10 }
+                }
+            },
+            {
+                "id": "analytics-lambda",
+                "type": "custom",
+                "position": { "x": 900, "y": 200 },
+                "data": {
+                    "type": "lambda_function",
+                    "label": "Analytics",
+                    "config": { "cold_start_latency": 300, "execution_time": 120 }
+                }
+            },
+            {
+                "id": "notification-lambda",
+                "type": "custom",
+                "position": { "x": 900, "y": 350 },
+                "data": {
+                    "type": "lambda_function",
+                    "label": "Notifications",
+                    "config": { "cold_start_latency": 200, "execution_time": 60 }
+                }
+            },
+            {
+                "id": "archival-lambda",
+                "type": "custom",
+                "position": { "x": 900, "y": 500 },
+                "data": {
+                    "type": "lambda_function",
+                    "label": "Data Archival",
+                    "config": { "cold_start_latency": 220, "execution_time": 90 }
+                }
+            },
+            {
+                "id": "analytics-storage",
+                "type": "custom",
+                "position": { "x": 1100, "y": 200 },
+                "data": {
+                    "type": "blob_storage",
+                    "label": "Analytics S3",
+                    "config": { "latency": 75 }
+                }
+            },
+            {
+                "id": "notification-db",
+                "type": "custom",
+                "position": { "x": 1100, "y": 350 },
+                "data": {
+                    "type": "database",
+                    "label": "DynamoDB",
+                    "config": { "type": "mongodb", "latency": 50, "capacity": 30 }
+                }
+            },
+            {
+                "id": "archive-storage",
+                "type": "custom",
+                "position": { "x": 1100, "y": 500 },
+                "data": {
+                    "type": "blob_storage",
+                    "label": "Glacier Archive",
+                    "config": { "latency": 150 }
+                }
+            }
+        ],
+        "edges": [
+            { "id": "e1", "source": "mobile-client", "target": "api-gateway", "type": "packet", "animated": true },
+            { "id": "e2", "source": "api-gateway", "target": "ingestion-lambda", "type": "packet", "animated": true },
+            { "id": "e3", "source": "ingestion-lambda", "target": "event-bus", "type": "packet", "animated": true },
+            { "id": "e4", "source": "event-bus", "target": "analytics-lambda", "type": "packet", "animated": true },
+            { "id": "e5", "source": "event-bus", "target": "notification-lambda", "type": "packet", "animated": true },
+            { "id": "e6", "source": "event-bus", "target": "archival-lambda", "type": "packet", "animated": true },
+            { "id": "e7", "source": "analytics-lambda", "target": "analytics-storage", "type": "packet", "animated": true },
+            { "id": "e8", "source": "notification-lambda", "target": "notification-db", "type": "packet", "animated": true },
+            { "id": "e9", "source": "archival-lambda", "target": "archive-storage", "type": "packet", "animated": true }
+        ]
+    }
+}

@@ -43,10 +43,12 @@ class LambdaFunction(BaseComponent):
         self.engine.emit_event("LAMBDA_EXECUTED", self.id, data={"request_id": request_id})
         
         if self.targets:
-            # Forward the request to targets
-            for target_id in self.targets:
-                target = self.engine.components.get(target_id)
-                if target and hasattr(target, "handle_request"):
-                    yield self.env.process(target.handle_request(request_id, self.id))
+            # Forward the request to the first target (typical lambda → storage/db pattern)
+            target_id = self.targets[0]
+            target = self.engine.components.get(target_id)
+            if target and hasattr(target, "handle_request"):
+                yield self.env.process(target.handle_request(request_id, self.id))
+            else:
+                self.engine.emit_event("REQUEST_COMPLETED", self.id, data={"request_id": request_id})
         else:
             self.engine.emit_event("REQUEST_COMPLETED", self.id, data={"request_id": request_id})
