@@ -64,7 +64,13 @@ const CanvasInner = () => {
                 y: event.clientY,
             });
 
-            addNode(type, position);
+            // Center the node on the drop point (assuming ~120x120 node size)
+            const centeredPosition = {
+                x: position.x - 60,
+                y: position.y - 60,
+            };
+
+            addNode(type, centeredPosition);
         },
         [addNode, screenToFlowPosition]
     );
@@ -78,7 +84,12 @@ const CanvasInner = () => {
         const isCtrl = event.ctrlKey || event.metaKey;
         if (isCtrl && event.key === 'v') {
             const position = screenToFlowPosition(mousePos.current);
-            pasteNode(position);
+            // Center paste position
+            const centeredPosition = {
+                x: position.x - 60,
+                y: position.y - 60,
+            };
+            pasteNode(centeredPosition);
         }
         if (isCtrl && event.key === 'c') {
             const selectedNode = nodes.find(n => n.selected);
@@ -158,7 +169,9 @@ const CanvasInner = () => {
                 nodeTypes={nodeTypes}
                 edgeTypes={edgeTypes}
                 edgesReconnectable={true}
-                fitView
+                defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+                minZoom={0.2}
+                maxZoom={2}
             >
                 <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#e2e8f0" />
                 <Controls className="bg-white border-slate-200 shadow-sm" />
