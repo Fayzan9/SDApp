@@ -9,6 +9,10 @@ class BaseComponent:
         self.id = component_id
         self.config = config
 
+    @property
+    def is_alive(self):
+        return self.id not in self.engine.killed_nodes
+
     @classmethod
     def get_metadata(cls):
         return {

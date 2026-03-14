@@ -63,6 +63,7 @@ async def get_all_templates():
 async def websocket_simulate(websocket: WebSocket):
     await manager.connect(websocket)
     engine_task = None
+    engine = None
     try:
         while True:
             data = await websocket.receive_text()
@@ -91,6 +92,18 @@ async def websocket_simulate(websocket: WebSocket):
                     engine_task.cancel()
                     engine_task = None
                 print("Simulation stopped")
+            
+            elif command == "TERMINATE_NODE":
+                node_id = message.get("node_id")
+                if engine and node_id:
+                    engine.terminate_node(node_id)
+                    print(f"Node terminated: {node_id}")
+            
+            elif command == "RESURRECT_NODE":
+                node_id = message.get("node_id")
+                if engine and node_id:
+                    engine.resurrect_node(node_id)
+                    print(f"Node resurrected: {node_id}")
                 
     except WebSocketDisconnect:
         if engine_task:

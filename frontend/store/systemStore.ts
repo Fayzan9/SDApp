@@ -38,8 +38,12 @@ interface SystemState {
     simStats: {
         totalRequests: number;
         completedRequests: number;
-        avgLatency: number;
+        failedRequests: number;
+        p50Latency: number;
+        p99Latency: number;
+        throughput: number;
     };
+    offlineNodes: string[];
 
     // Actions
     onNodesChange: OnNodesChange;
@@ -54,6 +58,8 @@ interface SystemState {
     // Simulation Actions
     startSimulation: () => void;
     stopSimulation: () => void;
+    terminateNode: (id: string) => void;
+    resurrectNode: (id: string) => void;
     handleSimEvent: (event: any) => void;
 
     // System Actions
@@ -89,8 +95,12 @@ export const useStore = create<SystemState>((set, get) => ({
     simStats: {
         totalRequests: 0,
         completedRequests: 0,
-        avgLatency: 0,
+        failedRequests: 0,
+        p50Latency: 0,
+        p99Latency: 0,
+        throughput: 0,
     },
+    offlineNodes: [],
     componentRegistry: {},
     templates: [],
     categories: [],
@@ -231,7 +241,19 @@ export const useStore = create<SystemState>((set, get) => ({
             get().handleSimEvent(ev);
         });
 
-        set({ isSimulating: true, simEvents: [], simStats: { totalRequests: 0, completedRequests: 0, avgLatency: 0 } });
+        set({ 
+            isSimulating: true, 
+            simEvents: [], 
+            offlineNodes: [],
+            simStats: { 
+                totalRequests: 0, 
+                completedRequests: 0, 
+                failedRequests: 0,
+                p50Latency: 0,
+                p99Latency: 0,
+                throughput: 0
+            } 
+        });
         service.startSimulation(graphData);
         (window as any).simService = service;
     },
@@ -243,18 +265,70 @@ export const useStore = create<SystemState>((set, get) => ({
             service.disconnect();
             (window as any).simService = null;
         }
-        set({ isSimulating: false });
+        set({ isSimulating: false, offlineNodes: [] });
         toast.info('Simulation stopped');
+    },
+
+    terminateNode: (id: string) => {
+        const service = (window as any).simService;
+        if (service && get().isSimulating) {
+            service.terminateNode(id);
+            toast.warning(`Terminating node: ${id}`);
+        }
+    },
+
+    resurrectNode: (id: string) => {
+        const service = (window as any).simService;
+        if (service && get().isSimulating) {
+            service.resurrectNode(id);
+            toast.success(`Resurrecting node: ${id}`);
+        }
     },
 
     handleSimEvent: (event: any) => {
         const { simStats, simEvents } = get();
+
+        // If it's a global stats update from the engine
+        if (event.event_type === 'SIMULATION_STATS') {
+            set({
+                simStats: {
+                    totalRequests: event.data.total_requests,
+                    completedRequests: event.data.completed_requests,
+                    failedRequests: event.data.failed_requests,
+                    p50Latency: event.data.p50_latency,
+                    p99Latency: event.data.p99_latency,
+                    throughput: event.data.throughput,
+                },
+                simEvents: [...simEvents.slice(-50), event]
+            });
+            return;
+        }
+
+        if (event.event_type === 'NODE_CRASHED') {
+            set({
+                offlineNodes: [...get().offlineNodes, event.source_id],
+                simEvents: [...simEvents.slice(-50), event]
+            });
+            toast.error(`Node CRASHED: ${event.source_id}`);
+            return;
+        }
+
+        if (event.event_type === 'NODE_RESTORED') {
+            set({
+                offlineNodes: get().offlineNodes.filter(id => id !== event.source_id),
+                simEvents: [...simEvents.slice(-50), event]
+            });
+            toast.success(`Node RESTORED: ${event.source_id}`);
+            return;
+        }
 
         const newStats = { ...simStats };
         if (event.event_type === 'REQUEST_STARTED') {
             newStats.totalRequests += 1;
         } else if (event.event_type === 'REQUEST_COMPLETED') {
             newStats.completedRequests += 1;
+        } else if (event.event_type === 'FAILURE') {
+            newStats.failedRequests += 1;
         }
 
         set({

@@ -51,4 +51,16 @@ export class SimulationService {
             this.ws.send(JSON.stringify({ command: 'STOP' }));
         }
     }
+
+    terminateNode(nodeId: string) {
+        if (this.ws?.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({ command: 'TERMINATE_NODE', node_id: nodeId }));
+        }
+    }
+
+    resurrectNode(nodeId: string) {
+        if (this.ws?.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({ command: 'RESURRECT_NODE', node_id: nodeId }));
+        }
+    }
 }

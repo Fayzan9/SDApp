@@ -25,6 +25,10 @@ class LoadBalancer(BaseComponent):
         }
 
     def handle_request(self, request_id: str, source_id: str):
+        if not self.is_alive:
+            self.engine.emit_event("FAILURE", self.id, data={"request_id": request_id, "reason": "LB offline"})
+            return
+
         self.engine.emit_event("REQUEST_MOVED", source_id, self.id, data={"request_id": request_id})
         
         if not self.targets:

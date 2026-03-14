@@ -28,7 +28,20 @@ class Server(BaseComponent):
         }
 
     def handle_request(self, request_id: str, source_id: str):
+        if not self.is_alive:
+            self.engine.emit_event("FAILURE", self.id, data={"request_id": request_id, "reason": "Node offline"})
+            return
+
         self.engine.emit_event("REQUEST_MOVED", source_id, self.id, data={"request_id": request_id})
+        
+        # Check for failure based on configured rate (failure_rate is in %)
+        import random
+        failure_rate = self.config.get("failure_rate", 0.0) / 100.0
+        if random.random() < failure_rate:
+            yield self.env.timeout(0.02) # Simulated failure detection time
+            self.engine.emit_event("FAILURE", self.id, data={"request_id": request_id, "reason": "Server error"})
+            return
+
         with self.resource.request() as req:
             yield req
             self.engine.emit_event("NODE_PROCESSING", self.id, data={"request_id": request_id})
