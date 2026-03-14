@@ -1,0 +1,67 @@
+---
+title: "Architecture in Motion: Building a Real-Time System Design Simulator"
+excerpt: "How I built SDApp, an interactive canvas that brings static system design diagrams to life using FastAPI, Next.js, and discrete-event simulation."
+date: "2026-03-14"
+category: "Web Development"
+author: "Faizan Popatiya"
+published: true
+---
+
+## Introduction
+
+We’ve all seen them: the boxes-and-arrows diagrams of "Standard Web Architecture" on whiteboards or in textbooks. But static diagrams fail to capture the most critical aspect of system design—**behavior**. How does a system *actually* react when a cache goes down? How does latency spike when a Load Balancer switches from Round Robin to Least Connections?
+
+I built **SDApp** to bridge this gap. It’s an interactive simulator where architecture isn't just drawn; it's computed. In this post, I’ll dive into the architecture that makes this real-time simulation possible.
+
+## Moving Beyond the Canvas
+
+At its core, SDApp needed to do three things:
+1. Provide a professional-grade visual builder.
+2. Simulate complex resource contention and request flows.
+3. Stream simulation events with sub-second latency.
+
+Instead of building a monolithic application, I opted for a **decoupled client-server architecture** that separates visual state from simulation logic.
+
+### The Visual Engine (Frontend)
+
+For the visual interface, I chose **Next.js** paired with **React Flow**. React Flow provides the lower-level primitives for node-based editors, allowing me to build custom components that feel like specialized architecture blocks (Caches, DBs, CDNs) rather than just generic boxes.
+
+**Key Architecture Decisions:**
+- **Zustand for State**: Since the graph needs to react instantly to simulation events (like a packet moving across an edge), I used Zustand for its lightweight atomic updates, avoiding unnecessary React re-renders.
+- **Dynamic Node Componentry**: Each node on the canvas is backed by a metadata schema. When you drop a "Load Balancer" onto the canvas, the UI dynamically generates the configuration controls based on the backend's capabilities.
+
+### The Simulation Brain (Backend)
+
+The simulation doesn't happen in the browser. To handle the computational complexity of thousands of concurrent requests, I built a high-performance engine using **FastAPI** and **SimPy**.
+
+**SimPy** is a discrete-event simulation framework. Unlike an infinite loop, it manages a "simulation clock" and executes events only when they are scheduled to occur. This allows SDApp to model realistic delays, CPU processing times, and network latency with extreme precision.
+
+## The Real-Time Loop
+
+The most challenging part was the communication layer. How do you show a request moving from a Client to a Server in real-time?
+
+I implemented a **WebSocket-based event stream**. When a simulation starts:
+1. The Frontend sends the graph topology as a JSON object.
+2. The Backend parses this into a simulation-ready object graph.
+3. As the simulation runs, the engine broadcasts "SimulationEvents" (e.g., `START_PROCESSING`, `TRANSIT_COMPLETE`, `CACHE_HIT`).
+4. The Frontend listens to these events and triggers animations along the edges of the graph.
+
+## Best Practices for Simulator Design
+
+- **Decouple the Logic**: Never run heavy simulation logic on the UI thread. Offload it to a specialized worker or backend service.
+- **Batch the Events**: Streaming every tiny state change can overwhelm the network. Batch updates together to maintain a smooth 60fps experience on the frontend.
+- **Component Extensibility**: Use a registry pattern. By defining components via schemas, adding a new "Message Queue" or "Lambda Function" to SDApp is as simple as adding a new Python class and an icon.
+
+## Conclusion
+
+SDApp started as a way to visualize system design, but it evolved into a powerful environment for "what-if" testing. By combining a flexible React interface with a robust Python simulation engine, we can finally stop guessing how our architectures will behave and start seeing it in motion.
+
+### Key Takeaways
+
+- **Discrete-event simulation** is the gold standard for modeling distributed systems.
+- **WebSockets** are essential for the "live" feel required in architectural simulators.
+- **Atomic state management** (Zustand) is a life-saver when dealing with high-frequency UI updates.
+
+---
+
+*Check out the source code for SDApp on [GitHub](https://github.com/yourusername/SDApp)!*
